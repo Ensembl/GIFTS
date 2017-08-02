@@ -75,7 +75,6 @@ use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Analysis::Runnable);
 
-
 =head2 new
 
   Arg [1]       : Bio::EnsEMBL::Analysis::Runnable::Blast
@@ -92,8 +91,6 @@ use vars qw(@ISA);
   Example   :
 
 =cut
-
-
 
 sub new {
   my ($class,@args) = @_;
@@ -126,8 +123,6 @@ sub new {
   return $self;
 }
 
-
-
 =head2 databases
 
   Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Blast
@@ -139,7 +134,6 @@ sub new {
   Example   :
 
 =cut
-
 
 sub databases{
   my ($self, @vals) = @_;
@@ -155,9 +149,8 @@ sub databases{
 
     $dbname =~ s/\s//g;
 
-    unless ($dbname =~ m!^/!)
-    {
-        warning('Specify an full path to the database.');
+    unless ($dbname =~ m!^/!) {
+      warning('Specify an full path to the database.');
     }
 
     # If the expanded database name exists put this in
@@ -186,7 +179,6 @@ sub databases{
   return $self->{databases};
 }
 
-
 =head2 parser
 
   Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Blast
@@ -198,12 +190,12 @@ sub databases{
   Example   :
 
 =cut
+
 sub parser{
   my $self = shift;
   $self->{'parser'} = shift if(@_);
   return $self->{'parser'};
 }
-
 
 =head2 filter
 
@@ -216,6 +208,7 @@ sub parser{
   Example   :
 
 =cut
+
 sub filter{
   my $self = shift;
   $self->{'filter'} = shift if(@_);
@@ -233,6 +226,7 @@ sub filter{
   Example   :
 
 =cut
+
 sub type{
   my $self = shift;
   $self->{'type'} = shift if(@_);
@@ -250,6 +244,7 @@ sub type{
   Example   :
 
 =cut
+
 sub unknown_error_string{
   my $self = shift;
   $self->{'unknown_error_string'} = shift if(@_);
@@ -268,18 +263,16 @@ sub unknown_error_string{
 
 =cut
 
-
 sub results_files{
   my ($self, $file) = @_;
-  if(!$self->{'results_files'}){
+  if (!$self->{'results_files'}) {
     $self->{'results_files'} = [];
   }
-  if($file){
-    push(@{$self->{'results_files'}}, $file);
+  if ($file) {
+    push(@{$self->{'results_files'}},$file);
   }
   return $self->{'results_files'};
 }
-
 
 =head2 run_analysis
 
@@ -292,8 +285,6 @@ sub results_files{
   Example   :
 
 =cut
-
-
 
 sub run_analysis {
   my ($self) = @_;
@@ -324,33 +315,29 @@ sub run_analysis {
     # this loop reads the STDERR from the blast command
     # checking for FATAL: messages (wublast) [what does ncbi blast say?]
     # N.B. using simple die() to make it easier for RunnableDB to parse.
-    while(<$fh>)
-    {
-      if(/FATAL:(.+)/)
-      {
+    while (<$fh>) {
+      if (/FATAL:(.+)/) {
         my $match = $1;
         print $match;
         # clean up before dying
         $self->delete_files;
-        if($match =~ /no valid contexts/){
+        if ($match =~ /no valid contexts/) {
           die qq{"VOID"\n}; # hack instead
-        }elsif($match =~ /Bus Error signal received/){
+        } elsif ($match =~ /Bus Error signal received/) {
           die qq{"BUS_ERROR"\n}; # can we work out which host?
-        }elsif($match =~ /Segmentation Violation signal received./){
+        } elsif ($match =~ /Segmentation Violation signal received./) {
           die qq{"SEGMENTATION_FAULT"\n}; # can we work out which host?
-        }elsif($match =~ /Out of memory;(.+)/){
+        } elsif ($match =~ /Out of memory;(.+)/) {
           # (.+) will be something like "1050704 bytes were last requested."
           die qq{"OUT_OF_MEMORY"\n};
           # resend to big mem machine by rulemanager
-        }elsif($match =~ /the query sequence is shorter than the word length/){
+        } elsif ($match =~ /the query sequence is shorter than the word length/) {
           #no valid context
           die qq{"VOID"\n}; # hack instead
-        }elsif($match =~ /External filter/){
+        } elsif ($match =~ /External filter/) {
           # Error while using an external filter
           die qq{"EXTERNAL_FITLER_ERROR"\n};
-        }
-        else
-        {
+        } else {
           warning("Something FATAL happened to BLAST we've not ".
                   "seen before, please add it to Package: "
                   . __PACKAGE__ . ", File: " . __FILE__);
@@ -359,18 +346,17 @@ sub run_analysis {
           #as standard this will be failed so job can be retried
           #when in pipeline
         }
-      }elsif(/WARNING:(.+)/){
+      } elsif (/WARNING:(.+)/) {
         # ONLY a warning usually something like hspmax=xxxx was exceeded
         # skip ...
-      }elsif(/^\s{10}(.+)/){ # ten spaces
+      } elsif (/^\s{10}(.+)/) { # ten spaces
         # Continuation of a WARNING: message
         # Hope this doesn't catch more than these.
         # skip ...
       }
     }
 
-    unless(close $fh)
-    {
+    unless(close $fh) {
       # checking for failures when closing.
       # we should't get here but if we do then $? is translated
       # below see man perlvar
@@ -383,7 +369,6 @@ sub run_analysis {
   }
 }
 
-
 =head2 parse_results
 
   Arg [1]   : Bio::EnsEMBL::Analysis::Runnable::Blast
@@ -394,7 +379,6 @@ sub run_analysis {
   Example   :
 
 =cut
-
 
 sub parse_results{
   my ($self) = @_;
@@ -409,6 +393,5 @@ sub parse_results{
   }
   $self->output($filtered_output);
 }
-
 
 1;
