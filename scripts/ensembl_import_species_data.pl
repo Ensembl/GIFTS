@@ -45,9 +45,6 @@ use Bio::EnsEMBL::Mapper;
 use Data::Dumper;
 use Bio::EnsEMBL::GIFTS::DB qw(get_gifts_dbc);
 
-#Create the registry
-my $registry = "Bio::EnsEMBL::Registry";
-
 #options that the user can set
 my $species = 'homo_sapiens';
 my $user;
