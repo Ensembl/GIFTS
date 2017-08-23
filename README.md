@@ -41,7 +41,7 @@ Typically we currently run updates every EnsEMBL release for human, mouse, rat, 
 
 ```
 cd $ENSCODE/GIFTS/scripts
-bsub perl ensembl_import_species_data.pl --release=ER --user=YOURNAME --species=YOURSPECIES --giftsdb_host=GIFTSHOST --giftsdb_user=GIFTSUSER --giftsdb_pass=GIFTSPASS --giftsdb_name=GIFTSDBNAME --giftsdb_port=GIFTSPORT --registry_host=REGISTRYHOST --registry_user=REGISTRYUSER --registry_pass=REGISTRYPASS --registry_port=REGISTRYPORT
+bsub perl ensembl_import_species_data.pl --release=ER --user=YOURNAME --species=YOURSPECIES --giftsdb_host=GIFTSHOST --giftsdb_user=GIFTSUSER --giftsdb_pass=GIFTSPASS --giftsdb_name=GIFTSDBNAME --giftsdb_port=GIFTSPORT --registry_host=REGISTRYHOST --registry_user=REGISTRYUSER [--registry_pass=REGISTRYPASS] --registry_port=REGISTRYPORT
 ```
 Once this has occured record the value in the ensembl_species_history table for the species/release of interest. Check the ensembl_transcript table.
 
