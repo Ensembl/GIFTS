@@ -104,8 +104,8 @@ if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$gi
   die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name and --giftsdb_port.");
 }
 
-if (!$registry_host or !$registry_user or !$registry_pass or !$registry_port) {
-  die("Please specify the registry host details with --registry_host, --registry_user, --registry_pass and --registry_port.");
+if (!$registry_host or !$registry_user or !$registry_port) {
+  die("Please specify the registry host details with --registry_host, --registry_user and --registry_port.");
 }
 
 if (!$user) {
