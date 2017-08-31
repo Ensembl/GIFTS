@@ -10,7 +10,7 @@ mkdir $ENSCODE
 cd $ENSCODE
 git clone https://github.com/Ensembl/ensembl.git
 git clone https://github.com/Ensembl/GIFTS.git
-export PERL5LIB=$ENSCODE/ensembl/modules:$ENSCODE/GIFTS/modules:$BIOPERL_LIB
+export PERL5LIB=$ENSCODE/ensembl/modules:$ENSCODE/ensembl-analysis/modules:$ENSCODE/GIFTS/modules:$BIOPERL_LIB
 ```
 If this is not being run on the EMBL-EBI cluster you will need to obtain a copy of
 1. BioPerl
