@@ -325,7 +325,7 @@ sub get_gifts_dba {
 sub get_gifts_dbc {
   my ($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port) = @_;
 
-  my $dsn = "dbi:mysql:".$giftsdb_name.":".$giftsdb_host.":".$giftsdb_port;
+  my $dsn = "dbi:Pg:dbname=".$giftsdb_name.";host=".$giftsdb_host.";port=".$giftsdb_port;
   my $dbc = DBI->connect($dsn,$giftsdb_user,$giftsdb_pass) or die "Unable to connect to GIFTS DB with $dsn";
   return $dbc;
 }

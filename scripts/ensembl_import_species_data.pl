@@ -125,6 +125,19 @@ my $transcript_id;
 my $gene_count=0;
 my $transcript_count=0;
 
+# write out the history
+print "Adding entry to the ensembl_species_history table\n";
+my $sql_history = "INSERT INTO ensembl_gifts.ensembl_species_history (species,assembly_accession,ensembl_tax_id,ensembl_release,status) VALUES (?,?,?,?,?)";
+my $sth = $dbc->prepare($sql_history);
+$sth->bind_param(1,$species_name);
+$sth->bind_param(2,$assembly_name);
+$sth->bind_param(3,$tax_id);
+$sth->bind_param(4,$release);
+$sth->bind_param(5,"LOAD_STARTED");
+$sth->execute() or die "Could not add history entry to GIFTS database:\n".$dbc->errstr;
+my $ensembl_species_history_id = $dbc->last_insert_id(undef,"ensembl_gifts","ensembl_species_history","ensembl_species_history_id");
+$sth->finish();
+
 while (my $slice = shift @$slices) {
   # Fetch additional meta data on the slice
   $region_accession = $slice->seq_region_name;
@@ -138,9 +151,9 @@ while (my $slice = shift @$slices) {
     $chromosome = '';
   }
 
-  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,assembly_accession,species,deleted,ensembl_tax_id,seq_region_start,seq_region_end,seq_region_strand,biotype,ensembl_release,userstamp,time_loaded) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+  my $sql_gene = "INSERT INTO ensembl_gifts.ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded) VALUES (?,?,?,?,?,?,?,?,?,?)";
 
-  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,ensembl_release,userstamp,time_loaded,enst_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+  my $sql_transcript = "INSERT INTO ensembl_gifts.ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ";
 
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift @$genes) {
@@ -153,19 +166,23 @@ while (my $slice = shift @$slices) {
     }
     $sth->bind_param(3,$chromosome);
     $sth->bind_param(4,$region_accession);
-    $sth->bind_param(5,$assembly_name);
-    $sth->bind_param(6,$species_name);
-    $sth->bind_param(7,0);
-    $sth->bind_param(8,$tax_id);
-    $sth->bind_param(9,$gene->seq_region_start);
-    $sth->bind_param(10,$gene->seq_region_end);
-    $sth->bind_param(11,$gene->seq_region_strand);
-    $sth->bind_param(12,$gene->biotype);
-    $sth->bind_param(13,$release);
-    $sth->bind_param(14,$user);
-    $sth->bind_param(15,$load_time);
+    $sth->bind_param(5,0);
+    $sth->bind_param(6,$gene->seq_region_start);
+    $sth->bind_param(7,$gene->seq_region_end);
+    $sth->bind_param(8,$gene->seq_region_strand);
+    $sth->bind_param(9,$gene->biotype);
+    $sth->bind_param(10,$load_time);
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
-    $gene_id = $sth->{mysql_insertid};
+    $gene_id = $dbc->last_insert_id(undef,"ensembl_gifts","ensembl_gene","gene_id");
+    $sth->finish();
+
+    # add entry to the gene_history table
+    print "Adding entry to the gene_history table\n";
+    my $gene_history = "INSERT INTO ensembl_gifts.gene_history (ensembl_species_history_id,gene_id) VALUES (?,?)";
+    my $sth = $dbc->prepare($gene_history);
+    $sth->bind_param(1,$ensembl_species_history_id);
+    $sth->bind_param(2,$gene_id);
+    $sth->execute() or die "Could not add gene history entry to GIFTS database:\n".$dbc->errstr;
     $sth->finish();
 
     $gene_count++;
@@ -185,7 +202,9 @@ while (my $slice = shift @$slices) {
       #    last;
       #  }
       #}
-      my $supporting_evidence = $transcript->get_all_DBLinks('Uniprot%')->[0];
+      
+      #my $supporting_evidence = $transcript->get_all_DBLinks('Uniprot%')->[0];
+      my $supporting_evidence;
       if (!$supporting_evidence) {
         $supporting_evidence = "";
       }
@@ -205,12 +224,21 @@ while (my $slice = shift @$slices) {
       $sth->bind_param(7,$transcript->seq_region_start);
       $sth->bind_param(8,$transcript->seq_region_end);
       $sth->bind_param(9,$supporting_evidence);
-      $sth->bind_param(10,$release);
-      $sth->bind_param(11,$user);
-      $sth->bind_param(12,$load_time);
-      $sth->bind_param(13,$enst_version);
+      $sth->bind_param(10,$user);
+      $sth->bind_param(11,$load_time);
+      $sth->bind_param(12,$enst_version);
       $sth->execute() or die "Could not add transcript entry to GIFTS database for ".$transcript->stable_id."\n".$dbc->errstr;
-      $transcript_id = $sth->{mysql_insertid};
+      #$transcript_id = $sth->{mysql_insertid};
+      $transcript_id = $dbc->last_insert_id(undef,"ensembl_gifts","ensembl_transcript","transcript_id");
+      $sth->finish();
+
+      # add entry to the transcript_history table
+      print "Adding entry to the transcript_history table\n";
+      my $transcript_history = "INSERT INTO ensembl_gifts.transcript_history (ensembl_species_history_id,transcript_id) VALUES (?,?)";
+      my $sth = $dbc->prepare($transcript_history);
+      $sth->bind_param(1,$ensembl_species_history_id);
+      $sth->bind_param(2,$transcript_id);
+      $sth->execute() or die "Could not add transcript history entry to GIFTS database:\n".$dbc->errstr;
       $sth->finish();
 
       $transcript_count++;
@@ -222,16 +250,20 @@ while (my $slice = shift @$slices) {
 print "Genes:".$gene_count."\n.";
 print "Transcripts:".$transcript_count."\n.";
 
-# write out the history
-print "Adding entry to the ensembl_species_history table\n";
-my $sql_history = "INSERT INTO ensembl_species_history (species,assembly_accession,ensembl_tax_id,ensembl_release,status) VALUES (?,?,?,?,?)";
-my $sth = $dbc->prepare($sql_history);
-$sth->bind_param(1,$species_name);
-$sth->bind_param(2,$assembly_name);
-$sth->bind_param(3,$tax_id);
-$sth->bind_param(4,$release);
-$sth->bind_param(5,"LOAD_COMPLETE");
-$sth->execute() or die "Could not add history entry to GIFTS database:\n".$dbc->errstr;
+# update the history
+print "Updating entry to the ensembl_species_history table\n";
+my $sql_history_status_update = "UPDATE ensembl_gifts.ensembl_species_history SET status=? WHERE ensembl_species_history_id=?";
+my $sth = $dbc->prepare($sql_history_status_update);
+$sth->bind_param(1,"LOAD_COMPLETE");
+$sth->bind_param(2,$ensembl_species_history_id);
+$sth->execute() or die "Could not update status for ensembl_species_history_id in GIFTS database:\n".$dbc->errstr;
+$sth->finish();
+
+my $sql_history_time_update = "UPDATE ensembl_gifts.ensembl_species_history SET time_loaded=? WHERE ensembl_species_history_id=?";
+my $sth = $dbc->prepare($sql_history_time_update);
+$sth->bind_param(1,"now()");
+$sth->bind_param(2,$ensembl_species_history_id);
+$sth->execute() or die "Could not update time_loaded for ensembl_species_history_id in GIFTS database:\n".$dbc->errstr;
 $sth->finish();
 
 print "Finished\n.";
