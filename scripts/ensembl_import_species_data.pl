@@ -107,7 +107,7 @@ my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,
 # Get the slice_adaptor
 my ($chromosome,$region_accession);
 my $slice_adaptor = $registry->get_adaptor($species,'core','Slice');
-my $slices = $slice_adaptor->fetch_all('toplevel');
+my $slices = $slice_adaptor->fetch_all('toplevel',undef,1);
 my $meta_adaptor = $registry->get_adaptor($species,'core','MetaContainer');
 my $ca = $registry->get_adaptor($species,'core','CoordSystem');
 my $species_name = $meta_adaptor->get_scientific_name;
