@@ -73,7 +73,7 @@ $VERSION     = 1.00;
 sub is_perfect_eu_match_mapping_id {
   my ($dbc,$mapping_id) = @_;
 
-  my $sql_select = "SELECT sp_ensembl_mapping_type FROM ensembl_uniprot WHERE mapping_id=?".
+  my $sql_select = "SELECT sp_ensembl_mapping_type FROM mapping WHERE mapping_id=?".
     " AND sp_ensembl_mapping_type LIKE '%ONE2ONE%' ";
   my $sth = $dbc->prepare($sql_select);
   $sth->bind_param(1,$mapping_id,SQL_INTEGER);
@@ -126,7 +126,7 @@ sub is_perfect_eu_match_uniparcs {
 # determine mapping ID
 sub get_mapping_id_from_ids {
   my ($dbc,$uniprot_id,$transcript_id) = @_;
-  my $sql_select_m = "SELECT mapping_id FROM ensembl_uniprot WHERE uniprot_id=? AND transcript_id=? ORDER BY mapping_id DESC LIMIT 1 ";
+  my $sql_select_m = "SELECT mapping_id FROM mapping WHERE uniprot_id=? AND transcript_id=? ORDER BY mapping_id DESC LIMIT 1 ";
   my $sth = $dbc->prepare($sql_select_m);
   $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
   $sth->bind_param(2,$transcript_id,SQL_INTEGER);
@@ -405,15 +405,15 @@ sub fetch_latest_uniprot_enst_perfect_matches {
   my $sql_select = "SELECT uniprot_acc,enst_id
                     FROM ensembl_species_history esh,
                          mapping_history mh,
-                         ensembl_uniprot eu,
-                         uniprot_entry u,
+                         mapping m,
+                         uniprot_entry ue,
                          ensembl_transcript et,
                          alignment_run ar,
                          alignment a
                     WHERE esh.ensembl_species_history_id=mh.ensembl_species_history_id
-                    AND mh.mapping_history_id=eu.mapping_history_id
-                    AND u.uniprot_id=eu.uniprot_id
-                    AND et.transcript_id=eu.transcript_id
+                    AND mh.mapping_history_id=m.mapping_history_id
+                    AND ue.uniprot_id=m.uniprot_id
+                    AND et.transcript_id=m.transcript_id
                     AND ar.alignment_run_id=a.alignment_run_id
                     AND mh.mapping_history_id=ar.mapping_history_id
                     AND mh.status='MAPPING_COMPLETED'
@@ -435,7 +435,7 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                                                                                    WHERE species=?
                                                                                    AND status='LOAD_COMPLETE'
                                                                                    AND assembly_accession=?))
-                    AND eu.mapping_id=a.mapping_id
+                    AND m.mapping_id=a.mapping_id
                     AND score1=1";
 
   my $sth = $dbc->prepare($sql_select);
