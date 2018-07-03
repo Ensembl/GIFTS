@@ -192,7 +192,7 @@ sub fetch_uniprot_info_for_id {
 
 sub fetch_uniprot_accession {
   my ($dbc,$uniprot_id) = @_;
-  my $sql_select_uniprot_acc = "SELECT uniprot_acc,sequence_version FROM uniprot WHERE uniprot_id=?";
+  my $sql_select_uniprot_acc = "SELECT uniprot_acc,sequence_version FROM uniprot_entry WHERE uniprot_id=?";
   my $sth = $dbc->prepare($sql_select_uniprot_acc);
   $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
   $sth->execute();
@@ -212,7 +212,7 @@ sub fetch_uniprot_accession {
 
 sub fetch_true_uniprot_accession {
   my ($dbc,$uniprot_id) = @_;
-  my $sql_select_uniprot_acc = "SELECT uniprot_acc,sequence_version FROM uniprot WHERE uniprot_id=?";
+  my $sql_select_uniprot_acc = "SELECT uniprot_acc,sequence_version FROM uniprot_entry WHERE uniprot_id=?";
   my $sth = $dbc->prepare($sql_select_uniprot_acc);
   $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
   $sth->execute();
@@ -406,7 +406,7 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                     FROM ensembl_species_history esh,
                          mapping_history mh,
                          ensembl_uniprot eu,
-                         uniprot u,
+                         uniprot_entry u,
                          ensembl_transcript et,
                          alignment_run ar,
                          alignment a
