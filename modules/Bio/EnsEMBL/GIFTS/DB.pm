@@ -73,8 +73,8 @@ $VERSION     = 1.00;
 sub is_perfect_eu_match_mapping_id {
   my ($dbc,$mapping_id) = @_;
 
-  my $sql_select = "SELECT sp_ensembl_mapping_type FROM mapping WHERE mapping_id=?".
-    " AND sp_ensembl_mapping_type LIKE '%ONE2ONE%' ";
+  my $sql_select = "SELECT mh.sp_ensembl_mapping_type FROM mapping m,mapping_history mh WHERE m.mapping_id=mh.mapping_id and m.mapping_id=?".
+    " AND mh.sp_ensembl_mapping_type LIKE '%ONE2ONE%' ";
   my $sth = $dbc->prepare($sql_select);
   $sth->bind_param(1,$mapping_id,SQL_INTEGER);
   $sth->execute();
