@@ -189,7 +189,7 @@ $sth_gifts_mapped->execute() or die "Could not fetch the mapping list:\n".$dbc->
 
 # Add the alignment run into the database
 my $alignment_run_id = -1;
-my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release,score2_type,report_type) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release,score2_type,report_type) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 my $sth = $dbc->prepare($sql_alignment_run);
 $sth->bind_param(1,'perfect_match');
 $sth->bind_param(2,$pipeline_name);
