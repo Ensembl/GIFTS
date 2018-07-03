@@ -406,17 +406,19 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                     FROM ensembl_species_history esh,
                          mapping_history mh,
                          mapping m,
+                         release_mapping_history rmh,
                          uniprot_entry ue,
                          ensembl_transcript et,
                          alignment_run ar,
                          alignment a
                     WHERE esh.ensembl_species_history_id=mh.ensembl_species_history_id
-                    AND mh.mapping_history_id=m.mapping_history_id
+                    AND m.mapping_id=mh.mapping_id
+                    AND rmh.release_mapping_history_id=mh.release_mapping_history_id
                     AND ue.uniprot_id=m.uniprot_id
                     AND et.transcript_id=m.transcript_id
                     AND ar.alignment_run_id=a.alignment_run_id
-                    AND mh.mapping_history_id=ar.mapping_history_id
-                    AND mh.status='MAPPING_COMPLETED'
+                    AND rmh.release_mapping_history_id=ar.release_mapping_history_id
+                    AND rmh.status='MAPPING_COMPLETED'
                     AND esh.species=?
                     AND assembly_accession=?
                     AND esh.ensembl_release=(SELECT DISTINCT max(ensembl_release)
@@ -425,9 +427,9 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                                              AND assembly_accession=?)
                                              AND time_mapped=(SELECT max(time_mapped)
                                                               FROM ensembl_species_history esh,
-                                                                   mapping_history mh
-                                                              WHERE esh.ensembl_species_history_id=mh.ensembl_species_history_id
-                                                              AND mh.status='MAPPING_COMPLETED'
+                                                                   release_mapping_history rmh
+                                                              WHERE esh.ensembl_species_history_id=rmh.ensembl_species_history_id
+                                                              AND rmh.status='MAPPING_COMPLETED'
                                                               AND species=?
                                                               AND assembly_accession=?
                                                               AND ensembl_release=(SELECT DISTINCT max(ensembl_release)
