@@ -152,10 +152,10 @@ sub get_mapping_id_from_accs {
   $sth->finish();
 
   # determine an EnsEMBL transcript ID
-  my $sql_select_e = "SELECT transcript_id,ensembl_release FROM ensembl_transcript WHERE enst_id=?  ORDER BY ensembl_release DESC LIMIT 1 ";
+  my $sql_select_e = "SELECT et.transcript_id,esh.ensembl_release FROM ensembl_transcript et,transcript_history th,ensembl_species_history esh WHERE et.enst_id=? AND et.transcript_id=th.transcript_id AND th.ensembl_species_history_id=esh.ensembl_species_history_id ORDER BY esh.ensembl_release DESC LIMIT 1 ";
   if ($ensembl_release) {
-    $sql_select_e = "SELECT transcript_id,ensembl_release FROM ensembl_transcript WHERE enst_id=? ".
-      " AND ensembl_release=".$ensembl_release." ORDER BY ensembl_release DESC LIMIT 1 ";
+    $sql_select_e = "SELECT et.transcript_id,esh.ensembl_release FROM ensembl_transcript et,transcript_history th,ensembl_species_history esh WHERE et.enst_id=? AND et.transcript_id=th.transcript_id AND th.ensembl_species_history_id=esh.ensembl_species_history_id ".
+      " AND esh.ensembl_release=".$ensembl_release." ORDER BY esh.ensembl_release DESC LIMIT 1 ";
   }
   $sth = $dbc->prepare($sql_select_e);
   $sth->bind_param(1,$ensp_id,SQL_CHAR);
