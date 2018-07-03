@@ -98,7 +98,7 @@ sub is_perfect_eu_match_accessions {
 sub is_perfect_eu_match_uniparcs {
   my ($dbc,$uniprot_id,$transcript_id) = @_;
   my $sql_select_e = "SELECT uniparc_accession  FROM ensembl_transcript WHERE transcript_id=?";
-  my $sql_select_u = "SELECT upi  FROM uniprot WHERE uniprot_id=?";
+  my $sql_select_u = "SELECT upi  FROM uniprot_entry WHERE uniprot_id=?";
 
   my $sth = $dbc->prepare($sql_select_e);
   $sth->bind_param(1,$transcript_id,SQL_INTEGER);
