@@ -139,10 +139,10 @@ sub get_mapping_id_from_ids {
 sub get_mapping_id_from_accs {
   my ($dbc,$uniprot_acc,$ensp_id,$uniprot_release,$ensembl_release) = @_;
   # determine a uniprot ID
-  my $sql_select_u = "SELECT uniprot_id,mapping_history_id FROM uniprot WHERE uniprot_acc=? ".
-    "ORDER BY mapping_history DESC LIMIT 1 ";
+  my $sql_select_u = "SELECT ue.uniprot_id,mh.mapping_history_id FROM uniprot_entry ue,mapping m,mapping_history mh WHERE ue.uniprot_id=m.uniprot_id AND m.mapping_id=mh.mapping_id AND ue.uniprot_acc=? ".
+    "ORDER BY mapping_history_id DESC LIMIT 1 ";
   if ($uniprot_release) {
-    $sql_select_u = "SELECT uniprot_id,mapping_history_id FROM uniprot WHERE uniprot_acc=? ".
+    $sql_select_u = "SELECT ue.uniprot_id,mh.mapping_history_id FROM uniprot_entry ue,mapping m,mapping_history mh WHERE ue.uniprot_id=m.uniprot_id AND m.mapping_id=mh.mapping_id AND ue.uniprot_acc=? ".
       "AND $uniprot_release=".$uniprot_release;
   }
   my $sth = $dbc->prepare($sql_select_u);
