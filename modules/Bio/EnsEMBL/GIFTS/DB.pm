@@ -346,17 +346,17 @@ sub get_info_from_perfect_match_alignment_run {
   my @alignrow = $sth_gifts_pmar->fetchrow_array;
   $sth_gifts_pmar->finish;
 
-  my $mapping_history_id = $alignrow[7];
+  my $release_mapping_history_id = $alignrow[7];
   my $release = $alignrow[8];
   my $uniprot_sp_file = $alignrow[9];
   my $uniprot_sp_isoform_file = $alignrow[10];
   my $uniprot_tr_dir = $alignrow[11];
 
   # Set the species up
-  my $sql_gifts_mapping_history = "SELECT ensembl_species_history_id FROM mapping_history WHERE mapping_history_id=".$mapping_history_id;
-  my $sth_gifts_mapping_history = $dbc->prepare($sql_gifts_mapping_history);
-  $sth_gifts_mapping_history->execute() or die "Could not fetch the mapping history with ID :".$mapping_history_id."\n".$dbc->errstr;
-  my @mhrow = $sth_gifts_mapping_history->fetchrow_array;
+  my $sql_gifts_release_mapping_history = "SELECT ensembl_species_history_id FROM release_mapping_history WHERE release_mapping_history_id=".$release_mapping_history_id;
+  my $sth_gifts_release_mapping_history = $dbc->prepare($sql_gifts_release_mapping_history);
+  $sth_gifts_release_mapping_history->execute() or die "Could not fetch the mapping history with ID :".$release_mapping_history_id."\n".$dbc->errstr;
+  my @mhrow = $sth_gifts_release_mapping_history->fetchrow_array;
   my $ensembl_species_history_id = $mhrow[0];
   my $sql_gifts_species = "SELECT species FROM ensembl_species_history  WHERE ensembl_species_history_id=".$ensembl_species_history_id;
   my $sth_gifts_species = $dbc->prepare($sql_gifts_species);
@@ -364,7 +364,7 @@ sub get_info_from_perfect_match_alignment_run {
   my @srow = $sth_gifts_species->fetchrow_array;
   my $species = $srow[0];
 
-  $sth_gifts_mapping_history->finish;
+  $sth_gifts_release_mapping_history->finish;
   $sth_gifts_species->finish;
 
   #
@@ -392,7 +392,7 @@ sub get_info_from_perfect_match_alignment_run {
     push @uniprot_archive_parsers,$ua;
   }
   print "Opened uniprot archives\n";
-  return($species,$release,$mapping_history_id,@uniprot_archive_parsers);
+  return($species,$release,$release_mapping_history_id,@uniprot_archive_parsers);
 }
 
 sub fetch_latest_uniprot_enst_perfect_matches {
