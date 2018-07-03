@@ -26,7 +26,7 @@
 
 =head1 NAME
 
-eu_alignment_blast_cigar.pl -
+eu_alignment_perfect_match.pl -
 
 =head1 DESCRIPTION
 
