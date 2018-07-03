@@ -76,7 +76,7 @@ my $uniprot_tr_dir;
 my $pipeline_name = "perfect match compare";
 my $pipeline_comment;
 my $pipeline_invocation = join " ",$0,@ARGV;
-my $mapping_history_id;
+my $release_mapping_history_id;
 
 GetOptions(
         'output_dir=s' => \$output_dir,
@@ -93,7 +93,7 @@ GetOptions(
         'user=s' => \$user,
         'species=s' => \$species,
         'release=i' => \$release,
-        'mapping_history_id=i' => \$mapping_history_id,
+        'release_mapping_history_id=i' => \$release_mapping_history_id,
         'uniprot_sp_file=s' => \$uniprot_sp_file,
         'uniprot_sp_isoform_file=s' => \$uniprot_sp_isoform_file,
         'uniprot_tr_dir=s' => \$uniprot_tr_dir,
@@ -117,8 +117,8 @@ if (!$release) {
   die("Please specify release with --release flag");
 }
 
-if (!$mapping_history_id) {
-  die("Please specify mapping_history_id with $mapping_history_id flag");
+if (!$release_mapping_history_id) {
+  die("Please specify mapping_history_id with $release_mapping_history_id flag");
 }
 
 if (!$pipeline_comment) {
@@ -183,7 +183,7 @@ print("Database adaptors opened\n");
 my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
 
 # fetch the items we want to update
-my $sql_gifts_mapped = "SELECT mapping_id,uniprot_id,transcript_id,sp_ensembl_mapping_type FROM ensembl_uniprot WHERE mapping_history_id=".$mapping_history_id;
+my $sql_gifts_mapped = "SELECT m.mapping_id,m.uniprot_id,m.transcript_id,mh.sp_ensembl_mapping_type FROM mapping m,mapping_history mh WHERE m.mapping_id=mh.mapping_id AND mh.release_mapping_history_id=".$release_mapping_history_id;
 my $sth_gifts_mapped = $dbc->prepare($sql_gifts_mapped);
 $sth_gifts_mapped->execute() or die "Could not fetch the mapping list:\n".$dbc->errstr;
 
@@ -196,7 +196,7 @@ $sth->bind_param(2,$pipeline_name);
 $sth->bind_param(3,$pipeline_comment);
 $sth->bind_param(4,"GIFTS/scripts/eu_alignment_perfect_match.pl");
 $sth->bind_param(5,$user);
-$sth->bind_param(6,$mapping_history_id);
+$sth->bind_param(6,$release_mapping_history_id);
 $sth->bind_param(7,$output_dir);
 if ($uniprot_sp_file) {
   $sth->bind_param(8,$uniprot_sp_file);
