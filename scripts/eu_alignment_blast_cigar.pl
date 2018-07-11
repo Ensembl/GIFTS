@@ -150,16 +150,16 @@ $sth_gifts_pmar->execute() or die "Could not fetch the previous alignment run:\n
 my @alignrow = $sth_gifts_pmar->fetchrow_array;
 $sth_gifts_pmar->finish;
 
-my $mapping_history_id = $alignrow[7];
+my $release_mapping_history_id = $alignrow[7];
 my $release = $alignrow[8];
 my $uniprot_sp_file = $alignrow[9];
 my $uniprot_sp_isoform_file = $alignrow[10];
 my $uniprot_tr_dir = $alignrow[11];
 
 # Set the species up
-my $sql_gifts_mapping_history = "SELECT ensembl_species_history_id FROM mapping_history WHERE mapping_history_id=".$mapping_history_id;
+my $sql_gifts_mapping_history = "SELECT rmh.ensembl_species_history_id FROM mapping_history mh,release_mapping_history rmh WHERE mh.release_mapping_history_id=rmh.release_mapping_history_id AND mh.release_mapping_history_id=".$release_mapping_history_id;
 my $sth_gifts_mapping_history = $dbc->prepare($sql_gifts_mapping_history);
-$sth_gifts_mapping_history->execute() or die "Could not fetch the mapping history with ID :".$mapping_history_id."\n".$dbc->errstr;
+$sth_gifts_mapping_history->execute() or die "Could not fetch the mapping history with ID :".$release_mapping_history_id."\n".$dbc->errstr;
 my @mhrow = $sth_gifts_mapping_history->fetchrow_array;
 my $ensembl_species_history_id = $mhrow[0];
 my $sql_gifts_species = "SELECT species FROM ensembl_species_history  WHERE ensembl_species_history_id=".$ensembl_species_history_id;
@@ -174,7 +174,7 @@ $sth_gifts_species->finish;
 print("Using previous alignment run values\n");
 print("Species=$species\n");
 print("Ensembl Release=$release\n");
-print("Mapping history ID=$mapping_history_id\n");
+print("Release mapping history ID=$release_mapping_history_id\n");
 print("perfect_match_alignment_run_id=$perfect_match_alignment_run_id\n");
 print("File=$uniprot_sp_file\n");
 print("File=$uniprot_sp_isoform_file\n");
@@ -237,7 +237,7 @@ $sth_gifts_process_list->execute() or die "Could not fetch the list or alignment
 # Add the alignment run into the database
 my $alignment_run_id = -1;
 if ($write_blast) {
-  my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+  my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
   my $sth = $dbc->prepare($sql_alignment_run);
   $sth->bind_param(1,'identity');
   $sth->bind_param(2,'coverage');
@@ -245,7 +245,7 @@ if ($write_blast) {
   $sth->bind_param(4,$pipeline_comment);
   $sth->bind_param(5,"GIFTS/scripts/eu_alignment_blast_cigar.pl");
   $sth->bind_param(6,$user);
-  $sth->bind_param(7,$mapping_history_id);
+  $sth->bind_param(7,$release_mapping_history_id);
   $sth->bind_param(8,$output_dir);
   if ($uniprot_sp_file) {
     $sth->bind_param(9,$uniprot_sp_file);
@@ -253,9 +253,7 @@ if ($write_blast) {
   if ($uniprot_sp_isoform_file) {
     $sth->bind_param(10,$uniprot_sp_isoform_file);
   }
-  if ($uniprot_tr_dir) {
-    $sth->bind_param(11,$uniprot_tr_dir);
-  }
+  $sth->bind_param(11,$uniprot_tr_dir);
   $sth->bind_param(12,$release);
 
   $sth->execute() or die "Could not add the alignment run:\n".$dbc->errstr;
