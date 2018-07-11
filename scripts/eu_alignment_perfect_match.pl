@@ -72,7 +72,7 @@ my $release;
 
 my $uniprot_sp_file;
 my $uniprot_sp_isoform_file;
-my $uniprot_tr_dir;
+my $uniprot_tr_dir = "";
 
 my $pipeline_name = "perfect match compare";
 my $pipeline_comment;
@@ -206,9 +206,8 @@ if ($uniprot_sp_file) {
 if ($uniprot_sp_isoform_file) {
   $sth->bind_param(9,$uniprot_sp_isoform_file);
 }
-if ($uniprot_tr_dir) {
-  $sth->bind_param(10,$uniprot_tr_dir);
-}
+
+$sth->bind_param(10,$uniprot_tr_dir);
 $sth->bind_param(11,$release);
 $sth->bind_param(12,"sp mapping ONE2ONE");
 $sth->bind_param(13,"sp mapping value");
