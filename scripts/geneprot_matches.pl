@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-# Copyright [2017] EMBL-European Bioinformatics Institute
+# Copyright [2017-2018] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License,Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ my $output_dir = ".";
 my $output_prefix = "gene_matched_";
 
 my $giftsdb_name;
+my $giftsdb_schema;
 my $giftsdb_host;
 my $giftsdb_user;
 my $giftsdb_pass;
@@ -70,14 +71,15 @@ GetOptions(
         'giftsdb_user=s' => \$giftsdb_user,
         'giftsdb_pass=s' => \$giftsdb_pass,
         'giftsdb_name=s' => \$giftsdb_name,
+        'giftsdb_schema=s' => \$giftsdb_schema,
         'giftsdb_port=s' => \$giftsdb_port,
         'e=i' => \$ensembl_species_history_id,
         'a=i' => \$alignment_run_id,
         'i=i' => \$idcoverage_run_id,
    );
 
-if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
-  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name and --giftsdb_port.");
+if (!$giftsdb_name or !$giftsdb_schema or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
+  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name, --giftsdb_schema and --giftsdb_port.");
 }
 
 if (!$ensembl_species_history_id) {
@@ -89,7 +91,7 @@ if (!$alignment_run_id) {
 }
 
 # GIFTS database connection
-my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
+my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
 
 # Retrieve the load details for the ensembl_species_history_id and ensure the mapping has occured
 my $sql_gifts_history = "SELECT species,assembly_accession,ensembl_tax_id,ensembl_release FROM ensembl_species_history WHERE ensembl_species_history_id=".$ensembl_species_history_id;

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-# Copyright [2017] EMBL-European Bioinformatics Institute
+# Copyright [2017-2018] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License,Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ my $uniprot_release;
 my $tidfile;
 
 my $giftsdb_name;
+my $giftsdb_schema;
 my $giftsdb_host;
 my $giftsdb_user;
 my $giftsdb_pass;
@@ -64,11 +65,12 @@ GetOptions(
         'giftsdb_user=s' => \$giftsdb_user,
         'giftsdb_pass=s' => \$giftsdb_pass,
         'giftsdb_name=s' => \$giftsdb_name,
+        'giftsdb_schema=s' => \$giftsdb_schema,
         'giftsdb_port=s' => \$giftsdb_port,
    );
 
-if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
-  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name and --giftsdb_port.");
+if (!$giftsdb_name or !$giftsdb_schema or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
+  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name, --giftsdb_schema and --giftsdb_port.");
 }
 
 if (!$tidfile) {
@@ -92,7 +94,7 @@ open(TIDFILE,"$tidfile ") or die "Could not open $tidfile.";
 # Write a header
 print "ENST ID ($ensembl_release),match type,uniprot_acc,uniprot_seq_version ($uniprot_release),uniprot_can_status\n";
 
-my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
+my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
 
 while (my $enst_id_full = <TIDFILE>) {
   chomp $enst_id_full;

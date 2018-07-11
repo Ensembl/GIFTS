@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-# Copyright [2017] EMBL-European Bioinformatics Institute
+# Copyright [2017-2018] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License,Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,7 +57,6 @@ $VERSION     = 1.00;
                   store_alignment
                   store_pdb_ens
                   fetch_transcript_ids
-                  get_gifts_dba
                   get_gifts_dbc
                   get_info_from_perfect_match_alignment_run
                   fetch_cigarmdz
@@ -309,24 +308,15 @@ sub fetch_cigarmdz {
   return ($cigar_plus_string,$md_string);
 }
 
-sub get_gifts_dba {
-  my ($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port) = @_;
-
-  my $gifts_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-                   '-no_cache' => 1,
-                   '-host'     => $giftsdb_host,
-                   '-port'     => $giftsdb_port,
-                   '-user'     => $giftsdb_user,
-                   '-pass'     => $giftsdb_pass,
-                   '-dbname'   => $giftsdb_name,
- ) or die('Unable to connect to GIFTS DB.');
-}
-
 sub get_gifts_dbc {
-  my ($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port) = @_;
+  my ($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port) = @_;
 
   my $dsn = "dbi:Pg:dbname=".$giftsdb_name.";host=".$giftsdb_host.";port=".$giftsdb_port;
   my $dbc = DBI->connect($dsn,$giftsdb_user,$giftsdb_pass) or die "Unable to connect to GIFTS DB with $dsn";
+  
+  # PostgreSQL schemas are not supported by DBI but I can set the search_path variable at this point
+  # because we are going to use one db schema only
+  $dbc->do("SET search_path TO ".$giftsdb_schema.", public");
   return $dbc;
 }
 

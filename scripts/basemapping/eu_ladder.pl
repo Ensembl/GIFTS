@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-# Copyright [2017] EMBL-European Bioinformatics Institute
+# Copyright [2017-2018] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License,Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ my $ens_release;
 my $uniprot_release;
 
 my $giftsdb_name;
+my $giftsdb_schema;
 my $giftsdb_host;
 my $giftsdb_user;
 my $giftsdb_pass;
@@ -98,6 +99,7 @@ GetOptions(
         'giftsdb_user=s' => \$giftsdb_user,
         'giftsdb_pass=s' => \$giftsdb_pass,
         'giftsdb_name=s' => \$giftsdb_name,
+        'giftsdb_schema=s' => \$giftsdb_schema,
         'giftsdb_port=s' => \$giftsdb_port,
         'registry_host=s' => \$registry_host,
         'registry_user=s' => \$registry_user,
@@ -109,8 +111,8 @@ if (!$registry_host or !$registry_user or !$registry_pass or !$registry_port) {
   die("Please specify the registry host details with --registry_host, --registry_user, --registry_pass and --registry_port.");
 }
 
-if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
-  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name and --giftsdb_port.");
+if (!$giftsdb_name or !$giftsdb_schema or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
+  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name, --giftsdb_schema and --giftsdb_port.");
 }
 
 if (!$uniprot_acc) {
@@ -121,7 +123,7 @@ if (!$uniprot_release) {
   die("Please specify the uniprot release to process with --uniprot_release");
 }
 
-my $gifts_dbc = get_gifts_dbc($giftsdb_name,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
+my $gifts_dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
 
 my @cigarplus_hash_refs = @{retrieve_muscle_info_uniprot($gifts_dbc,$uniprot_acc,$uniprot_release,0)};
 
