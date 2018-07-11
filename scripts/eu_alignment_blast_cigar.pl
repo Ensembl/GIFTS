@@ -257,7 +257,7 @@ if ($write_blast) {
   $sth->bind_param(12,$release);
 
   $sth->execute() or die "Could not add the alignment run:\n".$dbc->errstr;
-  $alignment_run_id = $sth->{mysql_insertid};
+  $alignment_run_id = $dbc->last_insert_id(undef,undef,"alignment_run","alignment_run_id");
   $sth->finish();
   print("Alignment run $alignment_run_id\n");
 }
