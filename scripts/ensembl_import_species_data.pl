@@ -181,7 +181,7 @@ while (my $slice = shift @$slices) {
     # add entry to the gene_history table
     print "Adding entry to the gene_history table\n";
     my $gene_history = "INSERT INTO gene_history (ensembl_species_history_id,gene_id) VALUES (?,?)";
-    my $sth = $dbc->prepare($gene_history);
+    $sth = $dbc->prepare($gene_history);
     $sth->bind_param(1,$ensembl_species_history_id);
     $sth->bind_param(2,$gene_id);
     $sth->execute() or die "Could not add gene history entry to GIFTS database:\n".$dbc->errstr;
@@ -237,7 +237,7 @@ while (my $slice = shift @$slices) {
       # add entry to the transcript_history table
       print "Adding entry to the transcript_history table\n";
       my $transcript_history = "INSERT INTO transcript_history (ensembl_species_history_id,transcript_id) VALUES (?,?)";
-      my $sth = $dbc->prepare($transcript_history);
+      $sth = $dbc->prepare($transcript_history);
       $sth->bind_param(1,$ensembl_species_history_id);
       $sth->bind_param(2,$transcript_id);
       $sth->execute() or die "Could not add transcript history entry to GIFTS database:\n".$dbc->errstr;
@@ -255,14 +255,14 @@ print "Transcripts:".$transcript_count."\n.";
 # update the history
 print "Updating entry to the ensembl_species_history table\n";
 my $sql_history_status_update = "UPDATE ensembl_species_history SET status=? WHERE ensembl_species_history_id=?";
-my $sth = $dbc->prepare($sql_history_status_update);
+$sth = $dbc->prepare($sql_history_status_update);
 $sth->bind_param(1,"LOAD_COMPLETE");
 $sth->bind_param(2,$ensembl_species_history_id);
 $sth->execute() or die "Could not update status for ensembl_species_history_id in GIFTS database:\n".$dbc->errstr;
 $sth->finish();
 
 my $sql_history_time_update = "UPDATE ensembl_species_history SET time_loaded=? WHERE ensembl_species_history_id=?";
-my $sth = $dbc->prepare($sql_history_time_update);
+$sth = $dbc->prepare($sql_history_time_update);
 $sth->bind_param(1,"now()");
 $sth->bind_param(2,$ensembl_species_history_id);
 $sth->execute() or die "Could not update time_loaded for ensembl_species_history_id in GIFTS database:\n".$dbc->errstr;
