@@ -67,17 +67,18 @@ sub retrieve_muscle_info_uniprot {
   }
 
   # Get the protein information
-  my $sql_string = "SELECT uniprot_id,protein_existence_id,sequence_version ".
-                   "FROM uniprot ".
-                   "WHERE uniprot_acc=? AND ".
-                   "      release_version=? ".
-                   " ORDER BY uniprot_id DESC LIMIT 1";
+  my $sql_string = "SELECT ue.uniprot_id,ue.sequence_version ".
+                   "FROM uniprot_entry ue,uniprot_entry_history ueh ".
+                   "WHERE ue.uniprot_id=ueh.uniprot_id AND".
+                   "      ue.uniprot_acc=? AND ".
+                   "      ueh.release_version=? ".
+                   " ORDER BY ue.uniprot_id DESC LIMIT 1";
 
   my $sth = $dbc->prepare($sql_string);
   $sth->bind_param(1,$uniprot_acc,SQL_CHAR);
   $sth->bind_param(2,$uniprot_release,SQL_CHAR);
   $sth->execute();
-  my ($uniprot_id,$protein_existence_id,$uniprot_seq_version) = $sth->fetchrow_array();
+  my ($uniprot_id,$uniprot_seq_version) = $sth->fetchrow_array();
   $sth->finish();
 
   if (!$uniprot_id) {
