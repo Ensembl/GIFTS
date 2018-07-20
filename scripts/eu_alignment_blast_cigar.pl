@@ -290,6 +290,7 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
   my $mapping_id = $row[0];
   my $uniprot_id = $row[1];
   my $gifts_transcript_id = $row[2];
+  my $alignment_id = 0;
 
   print(DEBUG_INFO "PROCESSING mapping_id:$mapping_id,uniprot_id:$uniprot_id,gifts_transcript_id:$gifts_transcript_id\n");
 
@@ -342,6 +343,7 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
         my $coverage = ($r->length) / length($translation->seq);
         store_alignment($dbc,$alignment_run_id,
                      $uniprot_id,$gifts_transcript_id,$mapping_id,$r->percent_id,$coverage,undef);
+        $alignment_id = $dbc->last_insert_id(undef,undef,"alignment","alignment_id");
       }
       else {
         print UNIPROT_NOSEQS "ERROR: NO BLASTP RESULTS PARSED\n";
@@ -355,8 +357,7 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
     }
     if ($write_cigar) {
       # check for an existing entry in the cigar table
-      my ($existing_cigar,$existing_mdz) =
-         fetch_cigarmdz($dbc,$uniprot_acc,$uniprot_seq_version,$ens_translation->stable_id);
+      my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($dbc,$alignment_id);
       if (!$existing_cigar) {
         # run muscle
         my ($seqobj_compu,$seqobj_compe) = run_muscle($target_u,$translation,$output_dir);
@@ -364,8 +365,7 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
         # store the results
         my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
         my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
-        store_cigarmdz($dbc,$uniprot_acc,$uniprot_seq_version,$ens_translation->stable_id,
-                      $cigar_plus_string,$md_string);
+        store_cigarmdz($dbc,$alignment_id,$cigar_plus_string,$md_string);
         $cigar_id_count++;
       }
     }
