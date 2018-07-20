@@ -279,29 +279,25 @@ sub store_pdb_ens {
 }
 
 sub store_cigarmdz {
-  my ($dbc,$uniprot_acc,$uniprot_seq_version,$ensp_id,$cigar_plus_string,$md_string) = @_;
+  my ($dbc,$alignment_id,$cigar_plus_string,$md_string) = @_;
   my $sql_insert =
-    "INSERT INTO ensp_u_cigar (cigarplus,mdz,uniprot_acc,uniprot_seq_version,ensp_id) VALUES (?,?,?,?,?)";
+    "INSERT INTO ensp_u_cigar (alignment_id,cigarplus,mdz) VALUES (?,?,?)";
 
   my $sth = $dbc->prepare($sql_insert);
-  $sth->bind_param(1,$cigar_plus_string);
-  $sth->bind_param(2,$md_string);
-  $sth->bind_param(3,$uniprot_acc);
-  $sth->bind_param(4,$uniprot_seq_version);
-  $sth->bind_param(5,$ensp_id);
+  $sth->bind_param(1,$alignment_id);
+  $sth->bind_param(2,$cigar_plus_string);
+  $sth->bind_param(3,$md_string);
   $sth->execute() or die "GIFTS DB error: Could not store cigar/mdz:\n".$dbc->errstr;
   $sth->finish();
 }
 
 sub fetch_cigarmdz {
-  my ($dbc,$uniprot_acc,$uniprot_seq_version,$ensp_id) = @_;
+  my ($dbc,$alignment_id) = @_;
 
   my $sql_select_uniprot_acc = "SELECT cigarplus,mdz FROM ensp_u_cigar ".
-    "WHERE uniprot_acc=? AND uniprot_seq_version=? AND ensp_id=?";
+    "WHERE alignment_id=?";
   my $sth = $dbc->prepare($sql_select_uniprot_acc);
-  $sth->bind_param(1,$uniprot_acc,SQL_CHAR);
-  $sth->bind_param(2,$uniprot_seq_version,SQL_INTEGER);
-  $sth->bind_param(3,$ensp_id,SQL_CHAR);
+  $sth->bind_param(1,$alignment_id,SQL_INTEGER);
   $sth->execute();
   my ($cigar_plus_string,$md_string) = $sth->fetchrow_array();
   $sth->finish();
@@ -401,7 +397,7 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                          ensembl_transcript et,
                          alignment_run ar,
                          alignment a
-                    WHERE esh.ensembl_species_history_id=mh.ensembl_species_history_id
+                    WHERE esh.ensembl_species_history_id=rmh.ensembl_species_history_id
                     AND m.mapping_id=mh.mapping_id
                     AND rmh.release_mapping_history_id=mh.release_mapping_history_id
                     AND ue.uniprot_id=m.uniprot_id
@@ -411,34 +407,19 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                     AND rmh.status='MAPPING_COMPLETED'
                     AND esh.species=?
                     AND assembly_accession=?
-                    AND esh.ensembl_release=(SELECT DISTINCT max(ensembl_release)
-                                             FROM ensembl_species_history
-                                             WHERE species=?
-                                             AND assembly_accession=?)
-                                             AND time_mapped=(SELECT max(time_mapped)
-                                                              FROM ensembl_species_history esh,
-                                                                   release_mapping_history rmh
-                                                              WHERE esh.ensembl_species_history_id=rmh.ensembl_species_history_id
-                                                              AND rmh.status='MAPPING_COMPLETED'
-                                                              AND species=?
-                                                              AND assembly_accession=?
-                                                              AND ensembl_release=(SELECT DISTINCT max(ensembl_release)
-                                                                                   FROM ensembl_species_history
-                                                                                   WHERE species=?
-                                                                                   AND status='LOAD_COMPLETE'
-                                                                                   AND assembly_accession=?))
                     AND m.mapping_id=a.mapping_id
-                    AND score1=1";
+                    AND a.score1=1
+                    AND esh.ensembl_release=92";
 
   my $sth = $dbc->prepare($sql_select);
   $sth->bind_param(1,$species,SQL_CHAR);
   $sth->bind_param(2,$assembly,SQL_CHAR);
-  $sth->bind_param(3,$species,SQL_CHAR);
-  $sth->bind_param(4,$assembly,SQL_CHAR);
-  $sth->bind_param(5,$species,SQL_CHAR);
-  $sth->bind_param(6,$assembly,SQL_CHAR);
-  $sth->bind_param(7,$species,SQL_CHAR);
-  $sth->bind_param(8,$assembly,SQL_CHAR);
+  #$sth->bind_param(3,$species,SQL_CHAR);
+  #$sth->bind_param(4,$assembly,SQL_CHAR);
+  #$sth->bind_param(5,$species,SQL_CHAR);
+  #$sth->bind_param(6,$assembly,SQL_CHAR);
+  #$sth->bind_param(7,$species,SQL_CHAR);
+  #$sth->bind_param(8,$assembly,SQL_CHAR);
   $sth->execute();
 
   my $uniprot_acc;
