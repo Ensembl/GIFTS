@@ -61,37 +61,9 @@ $VERSION     = 1.00;
                   get_info_from_perfect_match_alignment_run
                   fetch_cigarmdz
                   store_cigarmdz
-                  is_perfect_eu_match_mapping_id
-                  is_perfect_eu_match_accessions
                   is_perfect_eu_match_uniparcs
                   fetch_latest_uniprot_enst_perfect_matches
                );
-
-
-# denotes if the values in the UniProt mapping pipeline has identified something as a perfect match
-sub is_perfect_eu_match_mapping_id {
-  my ($dbc,$mapping_id) = @_;
-
-  my $sql_select = "SELECT mh.sp_ensembl_mapping_type FROM mapping m,mapping_history mh WHERE m.mapping_id=mh.mapping_id and m.mapping_id=?".
-    " AND mh.sp_ensembl_mapping_type LIKE '%ONE2ONE%' ";
-  my $sth = $dbc->prepare($sql_select);
-  $sth->bind_param(1,$mapping_id,SQL_INTEGER);
-  $sth->execute();
-  my ($mapping_type) = $sth->fetchrow_array();
-  $sth->finish();
-
-  return $mapping_type;
-}
-
-# denotes if the values in the UniProt mapping pipeline has identified something as a perfect match
-sub is_perfect_eu_match_accessions {
-  my ($dbc,$uniprot_acc,$ensp_id,$uniprot_release,$ensembl_release) = @_;
-  my $mapping_id = get_mapping_id_from_accs($dbc,$uniprot_acc,$ensp_id,$uniprot_release,$ensembl_release);
-  if ($mapping_id) {
-    return is_perfect_eu_match_mapping_id($dbc,$mapping_id);
-  }
-  return;
-}
 
 # Use the UniParc identifier as a comparison tool
 sub is_perfect_eu_match_uniparcs {
