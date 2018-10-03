@@ -228,7 +228,7 @@ while(my @row = $sth_gifts_mapped->fetchrow_array) {
   my $score2 = 0;
 
   # can we use existing UniParc information stored to make a storage call
-  my $is_uniparc_match = is_perfect_eu_match_uniparcs($dbc,$uniprot_id,$gifts_transcript_id);
+  my $is_uniparc_match = is_perfect_eu_match_uniparcs($uniprot_id,$gifts_transcript_id);
   if ($is_uniparc_match) {
     $score1 = 1;
   }
