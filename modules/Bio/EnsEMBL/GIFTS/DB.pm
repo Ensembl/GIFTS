@@ -123,50 +123,6 @@ sub is_perfect_eu_match_uniparcs {
   return ($uniprot_entry->{'upi'} eq $transcript->{'uniparc_accession'});
 }
 
-# determine mapping ID
-sub get_mapping_id_from_ids {
-  my ($dbc,$uniprot_id,$transcript_id) = @_;
-  my $sql_select_m = "SELECT mapping_id FROM mapping WHERE uniprot_id=? AND transcript_id=? ORDER BY mapping_id DESC LIMIT 1 ";
-  my $sth = $dbc->prepare($sql_select_m);
-  $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
-  $sth->bind_param(2,$transcript_id,SQL_INTEGER);
-  $sth->execute();
-  my ($mapping_id) = $sth->fetchrow_array();
-  $sth->finish();
-  return $mapping_id;
-}
-
-sub get_mapping_id_from_accs {
-  my ($dbc,$uniprot_acc,$ensp_id,$uniprot_release,$ensembl_release) = @_;
-  # determine a uniprot ID
-  my $sql_select_u = "SELECT ue.uniprot_id,mh.mapping_history_id FROM uniprot_entry ue,mapping m,mapping_history mh WHERE ue.uniprot_id=m.uniprot_id AND m.mapping_id=mh.mapping_id AND ue.uniprot_acc=? ".
-    "ORDER BY mapping_history_id DESC LIMIT 1 ";
-  if ($uniprot_release) {
-    $sql_select_u = "SELECT ue.uniprot_id,mh.mapping_history_id FROM uniprot_entry ue,mapping m,mapping_history mh WHERE ue.uniprot_id=m.uniprot_id AND m.mapping_id=mh.mapping_id AND ue.uniprot_acc=? ".
-      "AND $uniprot_release=".$uniprot_release;
-  }
-  my $sth = $dbc->prepare($sql_select_u);
-  $sth->bind_param(1,$uniprot_acc,SQL_CHAR);
-  $sth->execute();
-  my ($uniprot_id,$mapping_history_id_db) = $sth->fetchrow_array();
-  $sth->finish();
-
-  # determine an EnsEMBL transcript ID
-  my $sql_select_e = "SELECT et.transcript_id,esh.ensembl_release FROM ensembl_transcript et,transcript_history th,ensembl_species_history esh WHERE et.enst_id=? AND et.transcript_id=th.transcript_id AND th.ensembl_species_history_id=esh.ensembl_species_history_id ORDER BY esh.ensembl_release DESC LIMIT 1 ";
-  if ($ensembl_release) {
-    $sql_select_e = "SELECT et.transcript_id,esh.ensembl_release FROM ensembl_transcript et,transcript_history th,ensembl_species_history esh WHERE et.enst_id=? AND et.transcript_id=th.transcript_id AND th.ensembl_species_history_id=esh.ensembl_species_history_id ".
-      " AND esh.ensembl_release=".$ensembl_release." ORDER BY esh.ensembl_release DESC LIMIT 1 ";
-  }
-  $sth = $dbc->prepare($sql_select_e);
-  $sth->bind_param(1,$ensp_id,SQL_CHAR);
-  $sth->execute();
-  my ($transcript_id,$ensembl_release_db) = $sth->fetchrow_array();
-  $sth->finish();
-
-  my $mapping_id = get_mapping_id_from_ids($dbc,$uniprot_id,$transcript_id);
-  return $mapping_id;
-}
-
 sub fetch_uniprot_info_for_id {
   my ($dbc,$uniprot_id,@uniprot_archive_parsers) = @_;
 
