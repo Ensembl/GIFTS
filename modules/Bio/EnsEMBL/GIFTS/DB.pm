@@ -53,7 +53,9 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = ();
-@EXPORT_OK   = qw(fetch_uniprot_accession
+@EXPORT_OK   = qw(rest_get
+                  rest_post
+                  fetch_uniprot_accession
                   fetch_true_uniprot_accession
                   fetch_uniprot_info_for_id
                   store_alignment
