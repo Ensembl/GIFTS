@@ -60,7 +60,7 @@ $VERSION     = 1.00;
                   fetch_uniprot_info_for_id
                   store_alignment
                   store_pdb_ens
-                  fetch_transcript_ids
+                  fetch_transcript_enst
                   get_gifts_dbc
                   get_info_from_perfect_match_alignment_run
                   fetch_cigarmdz
