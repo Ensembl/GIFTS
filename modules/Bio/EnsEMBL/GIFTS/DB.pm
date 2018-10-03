@@ -120,7 +120,7 @@ sub is_perfect_eu_match_uniparcs {
   my $uniprot_entry = rest_get("/uniprot/entry/".$uniprot_id);
   my $transcript = rest_get("/ensembl/transcript/".$transcript_id);
 
-  return ($uniprot_entry->{'upi'} eq $transcript->{'uniparc_accession'});
+  return $uniprot_entry->{'upi'} eq $transcript->{'uniparc_accession'};
 }
 
 sub fetch_uniprot_info_for_id {
@@ -174,16 +174,12 @@ sub fetch_true_uniprot_accession {
   return ($uniprot_acc,$sequence_version);
 }
 
-sub fetch_transcript_ids {
-  my ($dbc,$gifts_transcript_id) = @_;
-  my $sql_select_enst = "SELECT enst_id FROM ensembl_transcript WHERE transcript_id=?";
-  my $sth = $dbc->prepare($sql_select_enst);
-  $sth->bind_param(1,$gifts_transcript_id,SQL_INTEGER);
-  $sth->execute();
-  my ($enst_id) = $sth->fetchrow_array();
-  $sth->finish();
+sub fetch_transcript_enst {
+  my $gifts_transcript_id = shift;
+  
+  my $transcript = rest_get("/ensembl/transcript/".$transcript_id);
 
-  return $enst_id;
+  return $transcript->{'enst_id'};
 }
 
 sub store_alignment {

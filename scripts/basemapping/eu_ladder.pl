@@ -55,7 +55,7 @@ use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Mapper;
 
-use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_ids get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(store_alignment get_gifts_dbc);
 use Bio::EnsEMBL::GIFTS::BaseMapping qw(retrieve_muscle_info_uniprot print_ladder);
 
 #

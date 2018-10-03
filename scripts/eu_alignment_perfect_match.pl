@@ -45,7 +45,7 @@ use Data::Dumper;
 use DBI qw(:sql_types);
 use LWP::UserAgent;
 use Bio::DB::HTS::Faidx;
-use Bio::EnsEMBL::GIFTS::DB qw(fetch_uniprot_info_for_id store_alignment fetch_transcript_ids is_perfect_eu_match_uniparcs get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(fetch_uniprot_info_for_id store_alignment fetch_transcript_enst is_perfect_eu_match_uniparcs get_gifts_dbc);
 
 #
 # Set options
@@ -249,7 +249,7 @@ while(my @row = $sth_gifts_mapped->fetchrow_array) {
     fetch_uniprot_info_for_id($dbc,$uniprot_id,@uniprot_archive_parsers);
 
   # Get the Ensembl transcript ID and translated sequence
-  my $enst_id = fetch_transcript_ids($dbc,$gifts_transcript_id);
+  my $enst_id = fetch_transcript_enst($gifts_transcript_id);
   my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
   my $translation_seq = undef;
   if ($transcript->translate) {

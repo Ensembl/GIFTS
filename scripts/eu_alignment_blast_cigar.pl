@@ -50,7 +50,7 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::GIFTS::Runnable::BlastP;
 use Bio::EnsEMBL::Analysis::Tools::BPliteWrapper;
-use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_ids fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_enst fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
 use Bio::EnsEMBL::GIFTS::BaseMapping qw(make_cigar_plus_string make_md_string run_muscle);
 
 # Set options
@@ -299,7 +299,7 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
     fetch_uniprot_info_for_id($dbc,$uniprot_id,@uniprot_archive_parsers);
 
   # Get the Ensembl transcript ID and translated sequence
-  my $enst_id = fetch_transcript_ids($dbc,$gifts_transcript_id);
+  my $enst_id = fetch_transcript_enst($gifts_transcript_id);
   print(DEBUG_INFO "transcript id=$gifts_transcript_id enst_id=$enst_id\n");
   my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
 
