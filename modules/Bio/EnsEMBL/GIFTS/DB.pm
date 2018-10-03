@@ -44,6 +44,8 @@ use Data::Dumper;
 use DBI qw(:sql_types);
 use LWP::UserAgent;
 use Bio::DB::HTS::Faidx;
+use HTTP::Tiny;
+use JSON;
 
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
@@ -64,6 +66,50 @@ $VERSION     = 1.00;
                   is_perfect_eu_match_uniparcs
                   fetch_latest_uniprot_enst_perfect_matches
                );
+
+# send a get request to the GIFTS REST server
+sub rest_get {
+  my $endpoint = shift;
+  
+  my $server = "";
+  
+  my $http = HTTP::Tiny->new();
+  my $response = $http->get($server.$endpoint,{headers => { 'Content-type' => 'application/json' }});
+  
+  if (!($response->{'success'})) {
+    die("REST server GET failed at endpoint: ".$server.$endpoint."\n");
+  }
+  
+  if (length($response->{'content'}) > 0) {
+    # return reference to hash containing data in json format
+    return (decode_json($response->{'content'}));
+  } else {
+    die("REST server GET response length is 0. Failed at endpoint: ".$server.$endpoint."\n");
+  }
+}
+
+# send a post request to the GIFTS REST server
+sub rest_post {
+  my ($endpoint,$content_hash_ref) = @_;
+  
+  my $server = "";
+  
+  my $http = HTTP::Tiny->new();
+  my $response = $http->post($server.$endpoint,{headers => { 'Content-type' => 'application/json',
+                                                             'Accept' => 'application/json' },
+                                                content => %{$content_hash_ref}});
+  
+  if (!($response->{'success'})) {
+    die("REST server POST failed at endpoint: ".$server.$endpoint."\n");
+  }
+  
+  if (length($response->{'content'}) > 0) {
+    # return reference to hash containing data in json format
+    return (decode_json($response->{'content'}));
+  } else {
+    die("REST server POST response length is 0. Failed at endpoint: ".$server.$endpoint."\n");
+  }
+}
 
 # Use the UniParc identifier as a comparison tool
 sub is_perfect_eu_match_uniparcs {
