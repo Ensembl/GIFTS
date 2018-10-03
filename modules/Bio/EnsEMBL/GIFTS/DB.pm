@@ -147,13 +147,11 @@ sub fetch_uniprot_info_for_id {
 }
 
 sub fetch_uniprot_accession {
-  my ($dbc,$uniprot_id) = @_;
-  my $sql_select_uniprot_acc = "SELECT uniprot_acc,sequence_version FROM uniprot_entry WHERE uniprot_id=?";
-  my $sth = $dbc->prepare($sql_select_uniprot_acc);
-  $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
-  $sth->execute();
-  my ($uniprot_acc,$sequence_version) = $sth->fetchrow_array();
-  $sth->finish();
+  my $uniprot_id = shift;
+
+  my $uniprot_entry = rest_get("/uniprot/entry/".$uniprot_id);
+  my $uniprot_acc = $uniprot_entry->{'uniprot_acc'};
+  my $sequence_version = $uniprot_entry->{'sequence_version'};
 
   # strip a preceding $ from the accession - this may be stored in GIFTS
   # redundant entries are special cases,but they still can be mapped
