@@ -225,7 +225,7 @@ while(my @row = $sth_gifts_mapped->fetchrow_array) {
 
   print(DEBUG_INFO "PROCESSING mapping_id:$mapping_id,uniprot_id:$uniprot_id,gifts_transcript_id:$gifts_transcript_id\n");
   # get the uniprot accession,sequence
-  my $uniprot_acc = fetch_uniprot_accession($dbc,$uniprot_id);
+  my $uniprot_acc = fetch_uniprot_accession($uniprot_id);
   print(DEBUG_INFO "uniprot id=$uniprot_id acc=$uniprot_acc\n");
   my $uniprot_seq = undef;
   foreach my $ui (@uniprot_archive_parsers) {

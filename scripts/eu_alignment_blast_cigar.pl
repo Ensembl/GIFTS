@@ -50,7 +50,7 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::GIFTS::Runnable::BlastP;
 use Bio::EnsEMBL::Analysis::Tools::BPliteWrapper;
-use Bio::EnsEMBL::GIFTS::DB qw(fetch_uniprot_accession store_alignment fetch_transcript_ids fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_ids fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
 use Bio::EnsEMBL::GIFTS::BaseMapping qw(make_cigar_plus_string make_md_string run_muscle);
 
 # Set options

@@ -44,7 +44,7 @@ use DBI qw(:sql_types);
 use LWP::UserAgent;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
-use Bio::EnsEMBL::GIFTS::DB qw(fetch_uniprot_accession store_alignment fetch_transcript_ids get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_ids get_gifts_dbc);
 
 #
 # Set options

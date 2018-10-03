@@ -127,7 +127,7 @@ sub fetch_uniprot_info_for_id {
   my ($dbc,$uniprot_id,@uniprot_archive_parsers) = @_;
 
   my $uniprot_seq = undef;
-  my ($uniprot_true_acc,$uniprot_seq_version) = fetch_true_uniprot_accession($dbc,$uniprot_id);
+  my ($uniprot_true_acc,$uniprot_seq_version) = fetch_true_uniprot_accession($uniprot_id);
   foreach my $ui (@uniprot_archive_parsers) {
     if ($ui->has_sequence($uniprot_true_acc)) {
       $uniprot_seq = $ui->get_sequence_no_length($uniprot_true_acc);

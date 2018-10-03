@@ -46,7 +46,7 @@ use Bio::DB::HTS::Faidx;
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
-use Bio::EnsEMBL::GIFTS::DB qw(fetch_uniprot_accession store_alignment fetch_transcript_ids);
+use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_ids);
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Mapper;

@@ -44,7 +44,7 @@ use DBI qw(:sql_types);
 use LWP::UserAgent;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
-use Bio::EnsEMBL::GIFTS::DB qw(get_gifts_dbc fetch_true_uniprot_accession);
+use Bio::EnsEMBL::GIFTS::DB qw(get_gifts_dbc);
 
 my $ensembl_release;
 my $uniprot_release;
