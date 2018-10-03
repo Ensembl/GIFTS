@@ -365,7 +365,7 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
         # store the results
         my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
         my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
-        store_cigarmdz($dbc,$alignment_id,$cigar_plus_string,$md_string);
+        store_cigarmdz($dbc,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
         $cigar_id_count++;
       }
     }
