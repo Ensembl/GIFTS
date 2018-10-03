@@ -115,31 +115,12 @@ sub rest_post {
 
 # Use the UniParc identifier as a comparison tool
 sub is_perfect_eu_match_uniparcs {
-  my ($dbc,$uniprot_id,$transcript_id) = @_;
-  my $sql_select_e = "SELECT uniparc_accession  FROM ensembl_transcript WHERE transcript_id=?";
-  my $sql_select_u = "SELECT upi  FROM uniprot_entry WHERE uniprot_id=?";
+  my ($uniprot_id,$transcript_id) = @_;
 
-  my $sth = $dbc->prepare($sql_select_e);
-  $sth->bind_param(1,$transcript_id,SQL_INTEGER);
-  $sth->execute();
-  my ($upi_e) = $sth->fetchrow_array();
-  $sth->finish();
+  my $uniprot_entry = rest_get("/uniprot/entry/".$uniprot_id);
+  my $transcript = rest_get("/ensembl/transcript/".$transcript_id);
 
-  $sth = $dbc->prepare($sql_select_u);
-  $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
-  $sth->execute();
-  my ($upi_u) = $sth->fetchrow_array();
-  $sth->finish();
-
-  if (!$upi_u || !$upi_e) {
-    return 0;
-  }
-
-  if ($upi_u eq $upi_e) {
-    return 1;
-  }
-
-  return 0;
+  return ($uniprot_entry->{'upi'} eq $transcript->{'uniparc_accession'});
 }
 
 # determine mapping ID
