@@ -193,9 +193,7 @@ $registry->load_registry_from_db(
 );
 
 # EnsEMBL database connection
-my $ens_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($species,"core");
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
-my $translation_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","translation");
 print("Database adaptors opened\n");
 
 # Open the Uniprot archives that were used previously
