@@ -335,51 +335,16 @@ sub fetch_latest_uniprot_enst_perfect_matches {
 # and the corresponding Ensembl transcript stable IDs as an array of values for a given
 # species name (ie 'Homo sapiens') and assembly accession (ie 'GRCh38').
 
-  my ($dbc,$species,$assembly) = @_;
+  my $assembly = shift;
 
-  my $sql_select = "SELECT uniprot_acc,enst_id
-                    FROM ensembl_species_history esh,
-                         mapping_history mh,
-                         mapping m,
-                         release_mapping_history rmh,
-                         uniprot_entry ue,
-                         ensembl_transcript et,
-                         alignment_run ar,
-                         alignment a
-                    WHERE esh.ensembl_species_history_id=rmh.ensembl_species_history_id
-                    AND m.mapping_id=mh.mapping_id
-                    AND rmh.release_mapping_history_id=mh.release_mapping_history_id
-                    AND ue.uniprot_id=m.uniprot_id
-                    AND et.transcript_id=m.transcript_id
-                    AND ar.alignment_run_id=a.alignment_run_id
-                    AND rmh.release_mapping_history_id=ar.release_mapping_history_id
-                    AND rmh.status='MAPPING_COMPLETED'
-                    AND esh.species=?
-                    AND assembly_accession=?
-                    AND m.mapping_id=a.mapping_id
-                    AND a.score1=1
-                    AND esh.ensembl_release=92";
-
-  my $sth = $dbc->prepare($sql_select);
-  $sth->bind_param(1,$species,SQL_CHAR);
-  $sth->bind_param(2,$assembly,SQL_CHAR);
-  #$sth->bind_param(3,$species,SQL_CHAR);
-  #$sth->bind_param(4,$assembly,SQL_CHAR);
-  #$sth->bind_param(5,$species,SQL_CHAR);
-  #$sth->bind_param(6,$assembly,SQL_CHAR);
-  #$sth->bind_param(7,$species,SQL_CHAR);
-  #$sth->bind_param(8,$assembly,SQL_CHAR);
-  $sth->execute();
-
-  my $uniprot_acc;
-  my $enst_id;
+  my $latest_alignments = rest_get("/alignments/alignment/latest/assembly/".$assembly."?alignment_type=perfect_match");
+  
   my %perfect_matches;
-
-  while (($uniprot_acc,$enst_id) = $sth->fetchrow_array()) {
+  foreach my $alignment (@{$latest_alignments}) { # hash to array here?
+    my $uniprot_acc = fetch_true_uniprot_accession($alignment->{'uniprot_id'});
+    my $enst_id = fetch_transcript_enst($alignment->{'transcript_id'});
     push(@{$perfect_matches{$uniprot_acc}},$enst_id);
   }
-
-  $sth->finish();
 
   return \%perfect_matches;
 }
