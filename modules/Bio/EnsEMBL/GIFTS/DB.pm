@@ -177,7 +177,7 @@ sub fetch_true_uniprot_accession {
 sub fetch_transcript_enst {
   my $gifts_transcript_id = shift;
   
-  my $transcript = rest_get("/ensembl/transcript/".$transcript_id);
+  my $transcript = rest_get("/ensembl/transcript/".$gifts_transcript_id);
 
   return $transcript->{'enst_id'};
 }
