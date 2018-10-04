@@ -50,7 +50,7 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::GIFTS::Runnable::BlastP;
 use Bio::EnsEMBL::Analysis::Tools::BPliteWrapper;
-use Bio::EnsEMBL::GIFTS::DB qw(store_alignment fetch_transcript_enst fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post store_alignment fetch_transcript_enst fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
 use Bio::EnsEMBL::GIFTS::BaseMapping qw(make_cigar_plus_string make_md_string run_muscle);
 
 # Set options
@@ -143,18 +143,14 @@ my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_use
 # species
 # mapping history run
 # ensembl release
-my $sql_gifts_alignment_run = "SELECT * FROM alignment_run WHERE alignment_run_id=".$perfect_match_alignment_run_id;
-my $sth_gifts_pmar = $dbc->prepare($sql_gifts_alignment_run);
-$sth_gifts_pmar->execute() or die "Could not fetch the previous alignment run:\n".$dbc->errstr;
 
-my @alignrow = $sth_gifts_pmar->fetchrow_array;
-$sth_gifts_pmar->finish;
+my $alignment_run = rest_get("/alignments/alignment_run/".$perfect_match_alignment_run_id);
 
-my $release_mapping_history_id = $alignrow[7];
-my $release = $alignrow[8];
-my $uniprot_sp_file = $alignrow[9];
-my $uniprot_sp_isoform_file = $alignrow[10];
-my $uniprot_tr_dir = $alignrow[11];
+my $release_mapping_history_id = $alignment_run->{'release_mapping_history_id'};
+my $release = $alignment_run->{'ensembl_release'};
+my $uniprot_sp_file = $alignment_run->{'uniprot_file_swissprot'};
+my $uniprot_sp_isoform_file = $alignment_run->{'uniprot_file_isoform'};
+my $uniprot_tr_dir = $alignment_run->{'uniprot_dir_trembl'};
 
 # Set the species up
 my $sql_gifts_mapping_history = "SELECT rmh.ensembl_species_history_id FROM mapping_history mh,release_mapping_history rmh WHERE mh.release_mapping_history_id=rmh.release_mapping_history_id AND mh.release_mapping_history_id=".$release_mapping_history_id;
