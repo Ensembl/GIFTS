@@ -219,28 +219,23 @@ my @alignments = rest_get("/alignments/align_run/".$perfect_match_alignment_run_
 # Add the alignment run into the database
 my $alignment_run_id = -1;
 if ($write_blast) {
-  my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-  my $sth = $dbc->prepare($sql_alignment_run);
-  $sth->bind_param(1,'identity');
-  $sth->bind_param(2,'coverage');
-  $sth->bind_param(3,$pipeline_name);
-  $sth->bind_param(4,$pipeline_comment);
-  $sth->bind_param(5,"GIFTS/scripts/eu_alignment_blast_cigar.pl");
-  $sth->bind_param(6,$user);
-  $sth->bind_param(7,$release_mapping_history_id);
-  $sth->bind_param(8,$output_dir);
-  if ($uniprot_sp_file) {
-    $sth->bind_param(9,$uniprot_sp_file);
-  }
-  if ($uniprot_sp_isoform_file) {
-    $sth->bind_param(10,$uniprot_sp_isoform_file);
-  }
-  $sth->bind_param(11,$uniprot_tr_dir);
-  $sth->bind_param(12,$release);
 
-  $sth->execute() or die "Could not add the alignment run:\n".$dbc->errstr;
-  $alignment_run_id = $dbc->last_insert_id(undef,undef,"alignment_run","alignment_run_id");
-  $sth->finish();
+  my $alignment_run = {
+                         score1_type => "identity",
+                         score2_type => "coverage",
+                         pipeline_name => $pipeline_name,
+                         pipeline_comment => $pipeline_comment,
+                         pipeline_script => "GIFTS/scripts/eu_alignment_blast_cigar.pl",
+                         userstamp => $user,
+                         release_mapping_history_id => $release_mapping_history_id,
+                         logfile_dir => $output_dir,
+                         uniprot_file_swissprot => $uniprot_sp_file,
+                         uniprot_file_isoform => $uniprot_sp_isoform_file,
+                         uniprot_dir_trembl => $uniprot_tr_dir,
+                         ensembl_release => $release,
+  };
+
+  my $alignment_run_id = rest_post("/alignments/alignment_run/",$alignment_run);
   print("Alignment run $alignment_run_id\n");
 }
 
