@@ -75,6 +75,7 @@ my $user;
 my $pipeline_name = "alignment pipeline BLAST";
 my $pipeline_comment = "development run";
 my $pipeline_invocation = join " ",$0,@ARGV;
+my $species; # ie "homo_sapiens"
 my $perfect_match_alignment_run_id;
 my $write_blast = 1;
 my $write_cigar = 1;
@@ -95,6 +96,7 @@ GetOptions(
         'registry_pass=s' => \$registry_pass,
         'registry_port=s' => \$registry_port,
         'user=s' => \$user,
+        'species=s' => \$species,
         'perfect_match_alignment_run_id=i' => \$perfect_match_alignment_run_id,
         'pipeline_name=s' => \$pipeline_name,
         'pipeline_comment=s' => \$pipeline_comment,
@@ -112,6 +114,10 @@ if (!$registry_host or !$registry_user or !$registry_port) {
 
 if (!$user) {
   die("Please specify user with --user flag");
+}
+
+if (!$species) {
+  die("Please specify species with the --species parameter (ie. --species homo_sapiens");
 }
 
 if (!$perfect_match_alignment_run_id) {
@@ -151,21 +157,6 @@ my $release = $alignment_run->{'ensembl_release'};
 my $uniprot_sp_file = $alignment_run->{'uniprot_file_swissprot'};
 my $uniprot_sp_isoform_file = $alignment_run->{'uniprot_file_isoform'};
 my $uniprot_tr_dir = $alignment_run->{'uniprot_dir_trembl'};
-
-# Set the species up
-my $sql_gifts_mapping_history = "SELECT rmh.ensembl_species_history_id FROM mapping_history mh,release_mapping_history rmh WHERE mh.release_mapping_history_id=rmh.release_mapping_history_id AND mh.release_mapping_history_id=".$release_mapping_history_id;
-my $sth_gifts_mapping_history = $dbc->prepare($sql_gifts_mapping_history);
-$sth_gifts_mapping_history->execute() or die "Could not fetch the mapping history with ID :".$release_mapping_history_id."\n".$dbc->errstr;
-my @mhrow = $sth_gifts_mapping_history->fetchrow_array;
-my $ensembl_species_history_id = $mhrow[0];
-my $sql_gifts_species = "SELECT species FROM ensembl_species_history  WHERE ensembl_species_history_id=".$ensembl_species_history_id;
-my $sth_gifts_species = $dbc->prepare($sql_gifts_species);
-$sth_gifts_species->execute() or die "Could not fetch the ensembl species history with ID :".$ensembl_species_history_id."\n".$dbc->errstr;
-my @srow = $sth_gifts_species->fetchrow_array;
-my $species = $srow[0];
-
-$sth_gifts_mapping_history->finish;
-$sth_gifts_species->finish;
 
 print("Using previous alignment run values\n");
 print("Species=$species\n");
@@ -223,10 +214,7 @@ foreach my $u (@uniprot_archives) {
 print "Opened uniprot archives\n";
 
 # fetch the items we want to update
-my $sql_gifts_process_list = "SELECT mapping_id,uniprot_id,transcript_id FROM alignment WHERE alignment_run_id=".$perfect_match_alignment_run_id.
-  " AND score1=0";
-my $sth_gifts_process_list = $dbc->prepare($sql_gifts_process_list);
-$sth_gifts_process_list->execute() or die "Could not fetch the list or alignments to process:\n".$dbc->errstr;
+my @alignments = rest_get("/alignments/align_run/".$perfect_match_alignment_run_id); # check real name for endpoint to fetch alignments by alignment run id
 
 # Add the alignment run into the database
 my $alignment_run_id = -1;
@@ -280,10 +268,17 @@ my $analysis_obj = new Bio::EnsEMBL::Analysis(
    );
 
 # the main loop
-while (my @row = $sth_gifts_process_list->fetchrow_array) {
-  my $mapping_id = $row[0];
-  my $uniprot_id = $row[1];
-  my $gifts_transcript_id = $row[2];
+ALIGNMENT: foreach my $alignment (@alignments) {
+
+  if ($alignment->{'score1'}) {
+    # we want to loop through the aligments whose score1 is 0
+    # score1 = 0 means there was not perfect match
+    # score1 = 1 means there was a perfect match
+    next ALIGNMENT;
+  }
+
+  my $uniprot_id = $alignment->{'uniprot_id'};
+  my $gifts_transcript_id = $alignment->{'transcript_id'};
   my $alignment_id = 0;
 
   print(DEBUG_INFO "PROCESSING mapping_id:$mapping_id,uniprot_id:$uniprot_id,gifts_transcript_id:$gifts_transcript_id\n");
@@ -380,7 +375,6 @@ while (my @row = $sth_gifts_process_list->fetchrow_array) {
   }
 }
 CLOSE:
-$sth_gifts_process_list->finish();
 $dbc->disconnect();
 close DEBUG_INFO;
 close UNIPROT_NOSEQS;
