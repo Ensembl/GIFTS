@@ -45,7 +45,7 @@ use Data::Dumper;
 use DBI qw(:sql_types);
 use LWP::UserAgent;
 use Bio::DB::HTS::Faidx;
-use Bio::EnsEMBL::GIFTS::DB qw(fetch_uniprot_info_for_id store_alignment fetch_transcript_enst is_perfect_eu_match_uniparcs get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post fetch_uniprot_info_for_id store_alignment fetch_transcript_enst is_perfect_eu_match_uniparcs get_gifts_dbc);
 
 #
 # Set options
@@ -176,9 +176,7 @@ $registry->load_registry_from_db(
 );
 
 # EnsEMBL database connection
-my $ens_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($species,"core");
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
-my $translation_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","translation");
 print("Database adaptors opened\n");
 
 # GIFTS database connection
