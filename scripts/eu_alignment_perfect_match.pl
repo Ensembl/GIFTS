@@ -182,11 +182,6 @@ print("Database adaptors opened\n");
 # GIFTS database connection
 my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
 
-# fetch the items we want to update
-my $sql_gifts_mapped = "SELECT m.mapping_id,m.uniprot_id,m.transcript_id,mh.sp_ensembl_mapping_type FROM mapping m,mapping_history mh WHERE m.mapping_id=mh.mapping_id AND mh.release_mapping_history_id=".$release_mapping_history_id;
-my $sth_gifts_mapped = $dbc->prepare($sql_gifts_mapped);
-$sth_gifts_mapped->execute() or die "Could not fetch the mapping list:\n".$dbc->errstr;
-
 # Add the alignment run into the database
 my $alignment_run = {
                          score1_type => "perfect_match",
@@ -202,17 +197,21 @@ my $alignment_run = {
                          uniprot_dir_trembl => $uniprot_tr_dir,
                          ensembl_release => $release,
                          report => "sp mapping value"
-  };
+};
 
 my $alignment_run_id = rest_post("/alignments/alignment_run/",$alignment_run);
 print("Alignment run $alignment_run_id\n");
 
 # The main loop
-while(my @row = $sth_gifts_mapped->fetchrow_array) {
-  my $mapping_id = $row[0];
-  my $uniprot_id = $row[1];
-  my $gifts_transcript_id = $row[2];
-  my $mapping_type = $row[3];
+
+# fetch the items we want to update
+my @mappings = rest_get("/mapping/history/".$release_mapping_history_id);
+
+foreach my $mapping (@mappings) { 
+  my $mapping_id = $mapping->{'mapping_id'};
+  my $uniprot_id = $mapping->{'uniprot_id'};
+  my $gifts_transcript_id = $mapping->{'transcript_id'};
+  my $mapping_type = $mapping->{'sp_ensembl_mapping_type'};
 
   my $score1 = 0;
   my $score2 = 0;
