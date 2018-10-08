@@ -99,7 +99,7 @@ sub rest_post {
   my $http = HTTP::Tiny->new();
   my $response = $http->post($server.$endpoint,{headers => { 'Content-type' => 'application/json',
                                                              'Accept' => 'application/json' },
-                                                content => encode_json($content_hash_ref));
+                                                content => encode_json($content_hash_ref)});
   
   if (!($response->{'success'})) {
     die("REST server POST failed at endpoint: ".$server.$endpoint."\n");
