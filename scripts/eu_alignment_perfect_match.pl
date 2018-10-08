@@ -54,13 +54,6 @@ use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post fetch_uniprot_info_for_id stor
 my $output_dir = "";
 my $output_prefix = "alignment_log";
 
-my $giftsdb_name;
-my $giftsdb_schema;
-my $giftsdb_host;
-my $giftsdb_user;
-my $giftsdb_pass;
-my $giftsdb_port;
-
 my $registry_host;
 my $registry_user;
 my $registry_pass;
