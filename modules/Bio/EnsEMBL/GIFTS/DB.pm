@@ -124,7 +124,7 @@ sub is_perfect_eu_match_uniparcs {
 }
 
 sub fetch_uniprot_info_for_id {
-  my ($dbc,$uniprot_id,@uniprot_archive_parsers) = @_;
+  my ($uniprot_id,@uniprot_archive_parsers) = @_;
 
   my $uniprot_seq = undef;
   my ($uniprot_true_acc,$uniprot_seq_version) = fetch_true_uniprot_accession($uniprot_id);
@@ -134,7 +134,7 @@ sub fetch_uniprot_info_for_id {
       return($uniprot_seq,$uniprot_true_acc,$uniprot_seq_version);
     }
   }
-  my ($uniprot_acc,$uniprot_seq_version2) = fetch_uniprot_accession($dbc,$uniprot_id);
+  my ($uniprot_acc,$uniprot_seq_version2) = fetch_uniprot_accession($uniprot_id);
   if ($uniprot_acc ne $uniprot_true_acc) {
     foreach my $ui (@uniprot_archive_parsers) {
       if ($ui->has_sequence($uniprot_acc)) {
