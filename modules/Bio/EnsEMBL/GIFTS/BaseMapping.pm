@@ -93,16 +93,14 @@ sub retrieve_muscle_info_uniprot {
 
   # Get the mapping information
   # GIFTS supports multiple protein to transcript mappings,so loop through the results
-  $sql_string = "SELECT mapping_id,mapping_history_id,transcript_id FROM ensembl_uniprot WHERE uniprot_id=?";
+  $sql_string = "SELECT mapping_id,transcript_id FROM mapping WHERE uniprot_id=?";
   $sth = $dbc->prepare($sql_string);
   $sth->bind_param(1,$uniprot_id,SQL_INTEGER);
   $sth->execute();
   my $mapping_id;
-  my $mapping_history_id;
   my $transcript_id;
   $sth->bind_col(1,\$mapping_id);
-  $sth->bind_col(2,\$mapping_history_id);
-  $sth->bind_col(3,\$transcript_id);
+  $sth->bind_col(2,\$transcript_id);
 
   # First cycle through the mapping IDs for the uniprot acc and find each perfect match
   my $perfect_match_found = 0;
