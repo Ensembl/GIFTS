@@ -188,31 +188,23 @@ my $sth_gifts_mapped = $dbc->prepare($sql_gifts_mapped);
 $sth_gifts_mapped->execute() or die "Could not fetch the mapping list:\n".$dbc->errstr;
 
 # Add the alignment run into the database
-my $alignment_run_id = -1;
-my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release,score2_type,report_type) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-my $sth = $dbc->prepare($sql_alignment_run);
-$sth->bind_param(1,'perfect_match');
-$sth->bind_param(2,$pipeline_name);
-$sth->bind_param(3,$pipeline_comment);
-$sth->bind_param(4,"GIFTS/scripts/eu_alignment_perfect_match.pl");
-$sth->bind_param(5,$user);
-$sth->bind_param(6,$release_mapping_history_id);
-$sth->bind_param(7,$output_dir);
-if ($uniprot_sp_file) {
-  $sth->bind_param(8,$uniprot_sp_file);
-}
-if ($uniprot_sp_isoform_file) {
-  $sth->bind_param(9,$uniprot_sp_isoform_file);
-}
+my $alignment_run = {
+                         score1_type => "perfect_match",
+                         score2_type => "sp mapping ONE2ONE",
+                         pipeline_name => $pipeline_name,
+                         pipeline_comment => $pipeline_comment,
+                         pipeline_script => "GIFTS/scripts/eu_alignment_perfect_match.pl",
+                         userstamp => $user,
+                         release_mapping_history_id => $release_mapping_history_id,
+                         logfile_dir => $output_dir,
+                         uniprot_file_swissprot => $uniprot_sp_file,
+                         uniprot_file_isoform => $uniprot_sp_isoform_file,
+                         uniprot_dir_trembl => $uniprot_tr_dir,
+                         ensembl_release => $release,
+                         report => "sp mapping value"
+  };
 
-$sth->bind_param(10,$uniprot_tr_dir);
-$sth->bind_param(11,$release);
-$sth->bind_param(12,"sp mapping ONE2ONE");
-$sth->bind_param(13,"sp mapping value");
-
-$sth->execute() or die "Could not add the alignment run:\n".$dbc->errstr;
-$alignment_run_id = $dbc->last_insert_id(undef,undef,"alignment_run","alignment_run_id");
-$sth->finish();
+my $alignment_run_id = rest_post("/alignments/alignment_run/",$alignment_run);
 print("Alignment run $alignment_run_id\n");
 
 # The main loop
