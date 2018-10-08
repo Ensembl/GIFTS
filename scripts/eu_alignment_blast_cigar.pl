@@ -50,20 +50,13 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::Analysis::Runnable;
 use Bio::EnsEMBL::GIFTS::Runnable::BlastP;
 use Bio::EnsEMBL::Analysis::Tools::BPliteWrapper;
-use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post store_alignment fetch_transcript_enst fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post store_alignment fetch_transcript_enst fetch_cigarmdz store_cigarmdz fetch_uniprot_info_for_id);
 use Bio::EnsEMBL::GIFTS::BaseMapping qw(make_cigar_plus_string make_md_string run_muscle);
 
 # Set options
 
 my $output_dir = ".";
 my $output_prefix = "alignment_blast_";
-
-my $giftsdb_name;
-my $giftsdb_schema;
-my $giftsdb_host;
-my $giftsdb_user;
-my $giftsdb_pass;
-my $giftsdb_port;
 
 my $registry_host;
 my $registry_user;
@@ -85,12 +78,6 @@ my $cigar_id_count=0;
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
-        'giftsdb_host=s' => \$giftsdb_host,
-        'giftsdb_user=s' => \$giftsdb_user,
-        'giftsdb_pass=s' => \$giftsdb_pass,
-        'giftsdb_name=s' => \$giftsdb_name,
-        'giftsdb_schema=s' => \$giftsdb_schema,
-        'giftsdb_port=s' => \$giftsdb_port,
         'registry_host=s' => \$registry_host,
         'registry_user=s' => \$registry_user,
         'registry_pass=s' => \$registry_pass,
@@ -103,10 +90,6 @@ GetOptions(
         'write_cigar=i' => \$write_cigar,
         'write_blast=i' => \$write_blast,
    );
-
-if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
-  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name, --giftsdb_schema and --giftsdb_port.");
-}
 
 if (!$registry_host or !$registry_user or !$registry_port) {
   die("Please specify the registry host details with --registry_host, --registry_user and --registry_port.");
@@ -138,9 +121,6 @@ open UNIPROT_NOSEQS,">".$output_file_noseqs or die print "Can't open output no s
 my $useq_file = $output_dir."/uniprot_seq.fa";
 
 # Set the OPTIONS for the GIFTS database
-
-# GIFTS database connection
-my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
 
 # retrieve values used from the previous alignment run
 #        'uniprot_sp_file=s' => \$uniprot_sp_file,
@@ -272,6 +252,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
     next ALIGNMENT;
   }
 
+  my $mapping_id = $alignment->{'mapping_id'};
   my $uniprot_id = $alignment->{'uniprot_id'};
   my $gifts_transcript_id = $alignment->{'transcript_id'};
   my $alignment_id = 0;
@@ -280,7 +261,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
 
   # get the uniprot accession,sequence version,sequence
   my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) =
-    fetch_uniprot_info_for_id($dbc,$uniprot_id,@uniprot_archive_parsers);
+    fetch_uniprot_info_for_id($uniprot_id,@uniprot_archive_parsers);
 
   # Get the Ensembl transcript ID and translated sequence
   my $enst_id = fetch_transcript_enst($gifts_transcript_id);
@@ -325,9 +306,9 @@ ALIGNMENT: foreach my $alignment (@alignments) {
 
       if ($r) {
         my $coverage = ($r->length) / length($translation->seq);
-        store_alignment($dbc,$alignment_run_id,
+        store_alignment($alignment_run_id,
                      $uniprot_id,$gifts_transcript_id,$mapping_id,$r->percent_id,$coverage,undef);
-        $alignment_id = $dbc->last_insert_id(undef,undef,"alignment","alignment_id");
+        #$alignment_id = $dbc->last_insert_id(undef,undef,"alignment","alignment_id");
       }
       else {
         print UNIPROT_NOSEQS "ERROR: NO BLASTP RESULTS PARSED\n";
@@ -341,7 +322,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
     }
     if ($write_cigar) {
       # check for an existing entry in the cigar table
-      my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($dbc,$alignment_id);
+      my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($alignment_id);
       if (!$existing_cigar) {
         # run muscle
         my ($seqobj_compu,$seqobj_compe) = run_muscle($target_u,$translation,$output_dir);
@@ -349,7 +330,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
         # store the results
         my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
         my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
-        store_cigarmdz($dbc,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
+        store_cigarmdz($alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
         $cigar_id_count++;
       }
     }
@@ -370,7 +351,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
   }
 }
 CLOSE:
-$dbc->disconnect();
+
 close DEBUG_INFO;
 close UNIPROT_NOSEQS;
 
