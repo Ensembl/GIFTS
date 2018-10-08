@@ -110,13 +110,8 @@ sub retrieve_muscle_info_uniprot {
     }
 
     # get the Ensembl transcript ID
-    my $sql_enst = "SELECT enst_id FROM ensembl_transcript WHERE transcript_id=?";
-    my $sth_enst = $dbc->prepare($sql_enst);
-    $sth_enst->bind_param(1,$transcript_id,SQL_INTEGER);
-    $sth_enst->execute();
-    my $enst_id;
-    $sth_enst->bind_col(1,\$enst_id);
-    $sth_enst->fetch();
+    my $transcript = rest_get("/ensembl/transcript/".$transcript_id);
+    my $enst_id = $transcript->{'enst_id'};
 
     # search for perfect match alignments for this mapping ID
     my $sql_align = "SELECT alignment_id,alignment_run_id FROM alignment WHERE uniprot_id=? AND transcript_id=? AND mapping_id=? AND score1=1";
