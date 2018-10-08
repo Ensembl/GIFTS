@@ -45,7 +45,7 @@ use Data::Dumper;
 use DBI qw(:sql_types);
 use LWP::UserAgent;
 use Bio::DB::HTS::Faidx;
-use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post fetch_uniprot_info_for_id store_alignment fetch_transcript_enst is_perfect_eu_match_uniparcs get_gifts_dbc);
+use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post fetch_uniprot_info_for_id store_alignment fetch_transcript_enst is_perfect_eu_match_uniparcs);
 
 #
 # Set options
@@ -82,12 +82,6 @@ my $release_mapping_history_id;
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
-        'giftsdb_host=s' => \$giftsdb_host,
-        'giftsdb_user=s' => \$giftsdb_user,
-        'giftsdb_pass=s' => \$giftsdb_pass,
-        'giftsdb_name=s' => \$giftsdb_name,
-        'giftsdb_schema=s' => \$giftsdb_schema,
-        'giftsdb_port=s' => \$giftsdb_port,
         'registry_host=s' => \$registry_host,
         'registry_user=s' => \$registry_user,
         'registry_pass=s' => \$registry_pass,
@@ -102,10 +96,6 @@ GetOptions(
         'pipeline_name=s' => \$pipeline_name,
         'pipeline_comment=s' => \$pipeline_comment,
    );
-
-if (!$giftsdb_name or !$giftsdb_schema or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
-  die("Please specify the GIFTS database details with --giftsdb_host, --giftsdb_user, --giftsdb_pass, --giftsdb_name, --giftsdb_schema and --giftsdb_port.");
-}
 
 if (!$registry_host or !$registry_user or !$registry_port) {
   die("Please specify the registry host details with --registry_host, --registry_user and --registry_port.");
@@ -179,9 +169,6 @@ $registry->load_registry_from_db(
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
 print("Database adaptors opened\n");
 
-# GIFTS database connection
-my $dbc = get_gifts_dbc($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port);
-
 # Add the alignment run into the database
 my $alignment_run = {
                          score1_type => "perfect_match",
@@ -235,7 +222,7 @@ foreach my $mapping (@mappings) {
 
   # get the uniprot accession,sequence version,sequence
   my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) =
-    fetch_uniprot_info_for_id($dbc,$uniprot_id,@uniprot_archive_parsers);
+    fetch_uniprot_info_for_id($uniprot_id,@uniprot_archive_parsers);
 
   # Get the Ensembl transcript ID and translated sequence
   my $enst_id = fetch_transcript_enst($gifts_transcript_id);
@@ -248,15 +235,14 @@ foreach my $mapping (@mappings) {
 
   # store the result if sequences are found or if a UniParc match was made
   if ($translation_seq && $uniprot_seq) {
-    store_alignment($dbc,$alignment_run_id,
+    store_alignment($alignment_run_id,
                $uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
   }
   elsif ($score1==1) {
-    store_alignment($dbc,$alignment_run_id,
+    store_alignment($alignment_run_id,
                $uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
   }
 }
 CLOSE:
-$dbc->disconnect;
 close UNIPROT_SEQS;
 close UNIPROT_NOSEQS;
