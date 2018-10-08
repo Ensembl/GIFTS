@@ -132,13 +132,8 @@ sub retrieve_muscle_info_uniprot {
         print "\tAlignment $alignment_id found in Alignment Run $alignment_run_id\n";
       }
       # the perfect score alignment run type check
-      my $sql_perfect_score_check = "SELECT score1_type FROM alignment_run WHERE alignment_run_id=?";
-      my $sth_perfect_score_check = $dbc->prepare($sql_perfect_score_check);
-      $sth_perfect_score_check->bind_param(1,$alignment_run_id,SQL_INTEGER);
-      $sth_perfect_score_check->execute();
-      my $s1_type;
-      $sth_perfect_score_check->bind_col(1,\$s1_type);
-      $sth_perfect_score_check->fetch();
+      my $alignment_run = rest_get("/alignments/alignment_run/".$alignment_run_id);
+      my $s1_type = $alignment_run->{'score1_type'};
 
       if ($s1_type eq "perfect_match") {
         # we have a perfect match
