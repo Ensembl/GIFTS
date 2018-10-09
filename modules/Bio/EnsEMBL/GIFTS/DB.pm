@@ -61,7 +61,6 @@ $VERSION     = 1.00;
                   store_alignment
                   fetch_transcript_enst
                   get_gifts_dbc
-                  get_info_from_perfect_match_alignment_run
                   fetch_cigarmdz
                   store_cigarmdz
                   is_perfect_eu_match_uniparcs
@@ -230,71 +229,6 @@ sub get_gifts_dbc {
   # because we are going to use one db schema only
   $dbc->do("SET search_path TO ".$giftsdb_schema.", public");
   return $dbc;
-}
-
-sub get_info_from_perfect_match_alignment_run {
-  my ($dbc,$perfect_match_alignment_run_id) = @_;
-  # retrieve values used from the previous alignment run
-  #        'uniprot_sp_file=s' => \$uniprot_sp_file,
-  #        'uniprot_sp_isoform_file=s' => \$uniprot_sp_isoform_file,
-  #        'uniprot_tr_dir=s' => \$uniprot_tr_dir,
-  # species
-  # mapping history run
-  # ensembl release
-  my $sql_gifts_alignment_run = "SELECT * FROM alignment_run WHERE alignment_run_id=".$perfect_match_alignment_run_id;
-  my $sth_gifts_pmar = $dbc->prepare($sql_gifts_alignment_run);
-  $sth_gifts_pmar->execute() or die "Could not fetch the previous alignment run:\n".$dbc->errstr;
-
-  my @alignrow = $sth_gifts_pmar->fetchrow_array;
-  $sth_gifts_pmar->finish;
-
-  my $release_mapping_history_id = $alignrow[7];
-  my $release = $alignrow[8];
-  my $uniprot_sp_file = $alignrow[9];
-  my $uniprot_sp_isoform_file = $alignrow[10];
-  my $uniprot_tr_dir = $alignrow[11];
-
-  # Set the species up
-  my $sql_gifts_release_mapping_history = "SELECT ensembl_species_history_id FROM release_mapping_history WHERE release_mapping_history_id=".$release_mapping_history_id;
-  my $sth_gifts_release_mapping_history = $dbc->prepare($sql_gifts_release_mapping_history);
-  $sth_gifts_release_mapping_history->execute() or die "Could not fetch the mapping history with ID :".$release_mapping_history_id."\n".$dbc->errstr;
-  my @mhrow = $sth_gifts_release_mapping_history->fetchrow_array;
-  my $ensembl_species_history_id = $mhrow[0];
-  my $sql_gifts_species = "SELECT species FROM ensembl_species_history  WHERE ensembl_species_history_id=".$ensembl_species_history_id;
-  my $sth_gifts_species = $dbc->prepare($sql_gifts_species);
-  $sth_gifts_species->execute() or die "Could not fetch the ensembl species history with ID :".$ensembl_species_history_id."\n".$dbc->errstr;
-  my @srow = $sth_gifts_species->fetchrow_array;
-  my $species = $srow[0];
-
-  $sth_gifts_release_mapping_history->finish;
-  $sth_gifts_species->finish;
-
-  #
-  # Open the Uniprot archives that were used previously
-  #
-  my @uniprot_archives = ($uniprot_sp_file);
-  push(@uniprot_archives,$uniprot_sp_isoform_file);
-
-  # contains all the chunks from the trembl file
-  if ($uniprot_tr_dir) {
-    opendir(TDIR,$uniprot_tr_dir) or die "Couldnt find trembl files";
-    while (my $tfile = readdir(TDIR)) {
-      next unless ($tfile =~ m/\.fa_chunk/);
-      next unless ($tfile =~ m/\.gz$/);
-      push(@uniprot_archives,$uniprot_tr_dir."/".$tfile);
-    }
-    closedir(TDIR);
-  }
-
-  # open uniprot fasta files
-  my @uniprot_archive_parsers;
-  foreach my $u (@uniprot_archives) {
-    print "Checking/Generating index for Uniprot Sequence source file $u\n";
-    my $ua = Bio::DB::HTS::Faidx->new($u);
-    push @uniprot_archive_parsers,$ua;
-  }
-  print "Opened uniprot archives\n";
-  return($species,$release,$release_mapping_history_id,@uniprot_archive_parsers);
 }
 
 sub fetch_latest_uniprot_enst_perfect_matches {
