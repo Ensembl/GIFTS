@@ -207,15 +207,12 @@ sub store_cigarmdz {
 }
 
 sub fetch_cigarmdz {
-  my ($dbc,$alignment_id) = @_;
+  my ($alignment_id) = @_;
 
-  my $sql_select_uniprot_acc = "SELECT cigarplus,mdz FROM ensp_u_cigar ".
-    "WHERE alignment_id=?";
-  my $sth = $dbc->prepare($sql_select_uniprot_acc);
-  $sth->bind_param(1,$alignment_id,SQL_INTEGER);
-  $sth->execute();
-  my ($cigar_plus_string,$md_string) = $sth->fetchrow_array();
-  $sth->finish();
+  my $cigar = rest_get("/ensembl/cigar/".$alignment_id);
+  my $cigar_plus_string = $cigar->{'cigarplus'};
+  my $md_string = $cigar->{'mdz'};
+
   return ($cigar_plus_string,$md_string);
 }
 
