@@ -59,7 +59,6 @@ $VERSION     = 1.00;
                   fetch_true_uniprot_accession
                   fetch_uniprot_info_for_id
                   store_alignment
-                  store_pdb_ens
                   fetch_transcript_enst
                   get_gifts_dbc
                   get_info_from_perfect_match_alignment_run
@@ -195,28 +194,6 @@ sub store_alignment {
                      report => $report
   };
   rest_post("/alignments/alignment/",$alignment);
-}
-
-sub store_pdb_ens {
-  my ($dbc,$pdb_acc,$pdb_release,$uniprot_acc,$enst_id,$enst_version,$ensp_id,$ensp_start,$ensp_end,$pdb_start,$pdb_end,$pdb_chain) = @_;
-
-  my $sql_insert =
-    "INSERT INTO pdb_ens (pdb_acc,pdb_release,uniprot_acc,enst_id,enst_version,ensp_id,ensp_start,ensp_end,pdb_start,pdb_end,pdb_chain) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-
-  my $sth = $dbc->prepare($sql_insert);
-  $sth->bind_param(1,$pdb_acc);
-  $sth->bind_param(2,$pdb_release);
-  $sth->bind_param(3,$uniprot_acc);
-  $sth->bind_param(4,$enst_id);
-  $sth->bind_param(5,$enst_version);
-  $sth->bind_param(6,$ensp_id);
-  $sth->bind_param(7,$ensp_start);
-  $sth->bind_param(8,$ensp_end);
-  $sth->bind_param(9,$pdb_start);
-  $sth->bind_param(10,$pdb_end);
-  $sth->bind_param(11,$pdb_chain);
-  $sth->execute() or die "GIFTS DB error: Could not store pdb_ens:\n".$dbc->errstr;
-  $sth->finish();
 }
 
 sub store_cigarmdz {
