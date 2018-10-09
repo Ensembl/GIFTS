@@ -204,6 +204,25 @@ sub store_cigarmdz {
                  mdz => $md_string
   };
   rest_post("/ensembl/cigar/",$cigar);
+  
+  # update the "alignment_difference" column in the "mapping" table
+  # alignment_difference is the sum of I, D and X in the cigarplus string
+  my $alignment_difference = 0;
+  while ($cigar_plus_string =~ /([0-9]+)(.)/g) {
+    if ($2 eq "I" or
+        $2 eq "D" or
+        $2 eq "X") {
+      $alignment_difference += $1;
+    }
+  }
+
+  my $alignment = rest_get("/alignments/alignment/".$alignment_id);
+  my $mapping = {
+                   uniprot_id => $alignment->{'uniprot_id'},
+                   transcript_id => $alignment->{'transcript_id'},
+                   alignment_difference => $alignment_difference,
+  };
+  rest_post("/mapping/",$mapping); # new endpoint syntax pending
 }
 
 sub fetch_cigarmdz {
