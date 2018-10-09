@@ -185,19 +185,16 @@ sub fetch_transcript_enst {
 sub store_alignment {
   my ($dbc,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
 
-  my $sql_alignment_add =
-    "INSERT INTO alignment (alignment_run_id,uniprot_id,transcript_id,mapping_id,score1,score2,report) VALUES (?,?,?,?,?,?,?)";
-
-  my $sth = $dbc->prepare($sql_alignment_add);
-  $sth->bind_param(1,$alignment_run_id);
-  $sth->bind_param(2,$uniprot_id);
-  $sth->bind_param(3,$transcript_id);
-  $sth->bind_param(4,$mapping_id);
-  $sth->bind_param(5,$score1);
-  $sth->bind_param(6,$score2);
-  $sth->bind_param(7,$report);
-  $sth->execute() or die "Could not add the alignment:\n".$dbc->errstr;
-  $sth->finish();
+  my $alignment = {
+                     alignment_run_id => $alignment_run_id,
+                     uniprot_id => $uniprot_id,
+                     transcript_id => $transcript_id,
+                     mapping_id => $mapping_id,
+                     score1 => $score1,
+                     score2 => $score2,
+                     report => $report
+  };
+  rest_post("/alignments/alignment/",$alignment);
 }
 
 sub store_pdb_ens {
