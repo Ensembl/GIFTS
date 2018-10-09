@@ -185,11 +185,6 @@ sub fetch_transcript_enst {
 sub store_alignment {
   my ($dbc,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
 
-  my $sql_select_arun = "SELECT * FROM alignment_run WHERE alignment_run_id=?";
-  my $sth_arun = $dbc->prepare($sql_select_arun);
-  $sth_arun->bind_param(1,$alignment_run_id,SQL_INTEGER);
-  $sth_arun->execute();
-
   my $sql_alignment_add =
     "INSERT INTO alignment (alignment_run_id,uniprot_id,transcript_id,mapping_id,score1,score2,report) VALUES (?,?,?,?,?,?,?)";
 
