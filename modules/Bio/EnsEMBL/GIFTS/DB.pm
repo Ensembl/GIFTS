@@ -197,16 +197,14 @@ sub store_alignment {
 }
 
 sub store_cigarmdz {
-  my ($dbc,$alignment_id,$cigar_plus_string,$md_string) = @_;
-  my $sql_insert =
-    "INSERT INTO ensp_u_cigar (alignment_id,cigarplus,mdz) VALUES (?,?,?)";
+  my ($alignment_id,$cigar_plus_string,$md_string) = @_;
 
-  my $sth = $dbc->prepare($sql_insert);
-  $sth->bind_param(1,$alignment_id);
-  $sth->bind_param(2,$cigar_plus_string);
-  $sth->bind_param(3,$md_string);
-  $sth->execute() or die "GIFTS DB error: Could not store cigar/mdz:\n".$dbc->errstr;
-  $sth->finish();
+  my $cigar = {
+                 alignment_id => $alignment_id,
+                 cigarplus => $cigar_plus_string,
+                 mdz => $md_string
+  };
+  rest_post("/ensembl/cigar/",$cigar);
 }
 
 sub fetch_cigarmdz {
