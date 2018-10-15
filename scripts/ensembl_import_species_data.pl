@@ -175,7 +175,7 @@ while (my $slice = shift(@$slices)) {
                                seq_region_end => $transcript->seq_region_end(),
                                supporting_evidence => $supporting_evidence,
                                userstamp => $user,
-                               select_transcript => $is_select_transcript
+                               'select' => $is_select_transcript
       };
       push($json_transcript,@{$json_gene->{'transcripts'}});
       $transcript_count++;
