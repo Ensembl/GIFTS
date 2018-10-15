@@ -147,8 +147,10 @@ while (my $slice = shift(@$slices)) {
 
       my $ensp = "";
       my $ensp_version = "";
+      my $ensp_len = 0;
       if ($transcript->translation()) {
-        my ($ensp,$ensp_version) = split(/\./,$transcript->translation()->stable_id_version());
+        ($ensp,$ensp_version) = split(/\./,$transcript->translation()->stable_id_version());
+        $ensp_len = $transcript->translation()->length();
       }
       
       my $ccds = "";
@@ -178,6 +180,7 @@ while (my $slice = shift(@$slices)) {
                                enst_version => $enst_version,
                                ensp_id => $ensp,
                                ensp_version => $ensp_version,
+                               ensp_len => $ensp_len,
                                ccds_id => $ccds,
                                uniparc_accession => $uniparc,
                                biotype => $transcript->biotype(),
