@@ -118,6 +118,13 @@ while (my $slice = shift(@$slices)) {
       $gene_name = $gene->display_xref()->display_id();
     }
 
+    # fetch the "select" transcript for this gene
+    my $select_transcript = "";
+    if (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
+      $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
+    }
+    
+
     my $json_gene = {
                        ensg_id => $gene->stable_id(),
                        gene_name => $gene_name,
@@ -150,6 +157,10 @@ while (my $slice = shift(@$slices)) {
         $supporting_evidence = "";
       }
 
+      # if this is the "select" transcript for this gene then "select_transcript" will be 1
+      # otherwise it will be 0
+      my $is_select_transcript = ($select_transcript eq $enst);
+
       my $json_transcript = {
                                enst_id => $enst,
                                enst_version => $enst_version,
@@ -160,7 +171,8 @@ while (my $slice = shift(@$slices)) {
                                seq_region_start => $transcript->seq_region_start(),
                                seq_region_end => $transcript->seq_region_end(),
                                supporting_evidence => $supporting_evidence,
-                               userstamp => $user
+                               userstamp => $user,
+                               select_transcript => $is_select_transcript
       };
       push($json_transcript,@{$json_gene->{'transcripts'}});
       $transcript_count++;
