@@ -159,7 +159,10 @@ while (my $slice = shift(@$slices)) {
 
       # if this is the "select" transcript for this gene then "select_transcript" will be 1
       # otherwise it will be 0
-      my $is_select_transcript = ($select_transcript eq $enst);
+      my $is_select_transcript = 0;
+      if ($select_transcript eq $enst) {
+        $is_select_transcript = 1;
+      }
 
       my $json_transcript = {
                                enst_id => $enst,
