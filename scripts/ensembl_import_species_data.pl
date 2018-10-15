@@ -113,6 +113,8 @@ while (my $slice = shift(@$slices)) {
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift(@$genes)) {
 
+    my ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
+
     my $gene_name = "";
     if ($gene->display_xref()) {
       $gene_name = $gene->display_xref()->display_id();
@@ -126,7 +128,8 @@ while (my $slice = shift(@$slices)) {
     
 
     my $json_gene = {
-                       ensg_id => $gene->stable_id(),
+                       ensg_id => $ensg,
+                       ensg_version => $ensg_version,
                        gene_name => $gene_name,
                        chromosome => $chromosome,
                        region_accession => $region_accession,
