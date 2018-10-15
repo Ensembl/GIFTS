@@ -144,6 +144,12 @@ while (my $slice = shift(@$slices)) {
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
      
       my ($enst,$enst_version) = split(/\./,$transcript->stable_id_version());
+
+      my $ensp = "";
+      my $ensp_version = "";
+      if ($transcript->translation()) {
+        my ($ensp,$ensp_version) = split(/\./,$transcript->translation()->stable_id_version());
+      }
       
       my $ccds = "";
       if ($transcript->ccds()) {
@@ -170,6 +176,8 @@ while (my $slice = shift(@$slices)) {
       my $json_transcript = {
                                enst_id => $enst,
                                enst_version => $enst_version,
+                               ensp_id => $ensp,
+                               ensp_version => $ensp_version,
                                ccds_id => $ccds,
                                uniparc_accession => $uniparc,
                                biotype => $transcript->biotype(),
