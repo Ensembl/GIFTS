@@ -437,7 +437,7 @@ sub fetch_latest_uniprot_enst_perfect_matches {
                     AND assembly_accession=?
                     AND m.mapping_id=a.mapping_id
                     AND a.score1=1
-                    AND esh.ensembl_release=92";
+                    AND esh.ensembl_release=94";
 
   my $sth = $dbc->prepare($sql_select);
   $sth->bind_param(1,$species,SQL_CHAR);
