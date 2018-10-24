@@ -152,7 +152,7 @@ while (my $slice = shift @$slices) {
     $chromosome = '';
   }
 
-  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,ensg_version) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,ensg_version,gene_symbol,gene_accession) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
   my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len,select) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
@@ -167,6 +167,9 @@ while (my $slice = shift @$slices) {
     } elsif (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
       $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
     }
+    
+    my $gene_symbol = "";
+    my $gene_accession = "";
     
     my $ensg = "";
     my $ensg_version = "";
@@ -187,6 +190,8 @@ while (my $slice = shift @$slices) {
     $sth->bind_param(9,$gene->biotype);
     $sth->bind_param(10,$load_time);
     $sth->bind_param(11,$ensg_version);
+    $sth->bind_param(12,$gene_symbol);
+    $sth->bind_param(13,$gene_accession);
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
     $gene_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_gene","gene_id");
     $sth->finish();
