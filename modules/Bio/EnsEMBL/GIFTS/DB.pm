@@ -197,6 +197,7 @@ sub store_alignment {
 
 sub store_cigarmdz {
   my ($alignment_id,$cigar_plus_string,$md_string) = @_;
+  #my ($dbc,$alignment_id,$cigar_plus_string,$md_string) = @_;
 
   my $cigar = {
                  alignment_id => $alignment_id,
@@ -223,6 +224,15 @@ sub store_cigarmdz {
                    alignment_difference => $alignment_difference,
   };
   rest_post("/mapping/",$mapping); # new endpoint syntax pending
+
+  # if no endpoint available, uncomment the following and restore $dbc parameters
+  #my $sql_mapping_update = "UPDATE mapping SET alignment_difference=? WHERE uniprot_id=? AND transcript_id=?"; 
+  #my $sth = $dbc->prepare($sql_mapping_update);
+  #$sth->bind_param(1,$alignment_difference);
+  #$sth->bind_param(2,$uniprot_id);
+  #$sth->bind_param(3,$transcript_id);
+  #$sth->execute() or die "Could not update the mapping alignment difference:\n".$dbc->errstr;
+  #$sth->finish();
 }
 
 sub fetch_cigarmdz {
