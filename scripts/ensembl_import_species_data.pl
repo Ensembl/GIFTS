@@ -154,7 +154,7 @@ while (my $slice = shift @$slices) {
 
   my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded) VALUES (?,?,?,?,?,?,?,?,?,?)";
 
-  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ";
+  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift @$genes) {
@@ -189,6 +189,15 @@ while (my $slice = shift @$slices) {
     $gene_count++;
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
       my ($start_exon,$end_exon,$start_exon_seq_offset,$end_exon_seq_offset,$start_exon_id,$end_exon_id);
+
+      my $ensp = "";
+      my $ensp_version = "";
+      my $ensp_len = 0;
+      if ($transcript->translation()) {
+        ($ensp,$ensp_version) = split(/\./,$transcript->translation()->stable_id_version());
+        $ensp_len = $transcript->translation()->length();
+      }
+
       my $ccds = "";
       if ($transcript->ccds) {
         $ccds = $transcript->ccds->display_id;
@@ -228,6 +237,9 @@ while (my $slice = shift @$slices) {
       $sth->bind_param(10,$user);
       $sth->bind_param(11,$load_time);
       $sth->bind_param(12,$enst_version);
+      $sth->bind_param(13,$ensp);
+      $sth->bind_param(14,$ensp_version);
+      $sth->bind_param(15,$ensp_len);
       $sth->execute() or die "Could not add transcript entry to GIFTS database for ".$transcript->stable_id."\n".$dbc->errstr;
       #$transcript_id = $sth->{mysql_insertid};
       $transcript_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_transcript","transcript_id");
