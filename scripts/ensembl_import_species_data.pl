@@ -152,14 +152,19 @@ while (my $slice = shift @$slices) {
     $chromosome = '';
   }
 
-  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded) VALUES (?,?,?,?,?,?,?,?,?,?)";
+  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,ensg_version) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
   my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift @$genes) {
     my $sth = $dbc->prepare($sql_gene);
-    $sth->bind_param(1,$gene->stable_id);
+    
+    my $ensg = "";
+    my $ensg_version = "";
+    ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
+    
+    $sth->bind_param(1,$ensg);
     if ($gene->display_xref) {
       $sth->bind_param(2,$gene->display_xref->display_id);
     } else {
@@ -173,6 +178,7 @@ while (my $slice = shift @$slices) {
     $sth->bind_param(8,$gene->seq_region_strand);
     $sth->bind_param(9,$gene->biotype);
     $sth->bind_param(10,$load_time);
+    $sth->bind_param(11,$ensg_version);
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
     $gene_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_gene","gene_id");
     $sth->finish();
