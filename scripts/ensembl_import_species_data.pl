@@ -168,20 +168,20 @@ while (my $slice = shift @$slices) {
     } elsif (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
       $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
     }
-    
-    my $gene_symbol = "";
+
     my $gene_accession = "";
-    
+    my $gene_name = "";
+    if ($gene->description() =~ /(.+)\[.+Acc:(.+)\]/) {
+      $gene_name = $1;
+      $gene_accession = $2;
+    }
+
     my $ensg = "";
     my $ensg_version = "";
     ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
     
     $sth->bind_param(1,$ensg);
-    if ($gene->display_xref) {
-      $sth->bind_param(2,$gene->display_xref->display_id);
-    } else {
-      $sth->bind_param(2,"");
-    }
+    $sth->bind_param(2,$gene_name);
     $sth->bind_param(3,$chromosome);
     $sth->bind_param(4,$region_accession);
     $sth->bind_param(5,0);
@@ -191,7 +191,14 @@ while (my $slice = shift @$slices) {
     $sth->bind_param(9,$gene->biotype);
     $sth->bind_param(10,$load_time);
     $sth->bind_param(11,$ensg_version);
-    $sth->bind_param(12,$gene_symbol);
+    
+    # gene_symbol
+    if ($gene->display_xref) {
+      $sth->bind_param(12,$gene->display_xref()->display_id());
+    } else {
+      $sth->bind_param(12,"");
+    }
+    
     $sth->bind_param(13,$gene_accession);
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
     $gene_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_gene","gene_id");
