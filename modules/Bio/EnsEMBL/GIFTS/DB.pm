@@ -289,6 +289,34 @@ sub store_cigarmdz {
   $sth->bind_param(3,$md_string);
   $sth->execute() or die "GIFTS DB error: Could not store cigar/mdz:\n".$dbc->errstr;
   $sth->finish();
+  
+  # update the "alignment_difference" column in the "mapping" table
+  # alignment_difference is the sum of I, D and X in the cigarplus string
+  my $alignment_difference = 0;
+  while ($cigar_plus_string =~ /([0-9]+)(.)/g) {
+    if ($2 eq "I" or
+        $2 eq "D" or
+        $2 eq "X") {
+      $alignment_difference += $1;
+    }
+  }
+
+  # get uniprot_id and transcript_id by alignment_id
+  my $sql_select_alignment = "SELECT uniprot_id,transcript_id FROM alignment WHERE alignment_id=?";
+  my $sth = $dbc->prepare($sql_select_alignment);
+  $sth->bind_param(1,$alignment_id,SQL_INTEGER);
+  $sth->execute();
+  my ($uniprot_id,$transcript_id) = $sth->fetchrow_array();
+  $sth->finish();
+
+  # update the mapping table with the alignment_difference value
+  my $sql_mapping_update = "UPDATE mapping SET alignment_difference=? WHERE uniprot_id=? AND transcript_id=?"; 
+  $sth = $dbc->prepare($sql_mapping_update);
+  $sth->bind_param(1,$alignment_difference);
+  $sth->bind_param(2,$uniprot_id);
+  $sth->bind_param(3,$transcript_id);
+  $sth->execute() or die "Could not update the mapping alignment difference:\n".$dbc->errstr;
+  $sth->finish();
 }
 
 sub fetch_cigarmdz {
