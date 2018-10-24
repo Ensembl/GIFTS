@@ -31,7 +31,8 @@ ensembl_import_species_data.pl -
 =head1 DESCRIPTION
 
   This script imports Ensembl gene, transcript and metadata data into the GIFTS database tables
-  'ensembl_gene', 'ensembl_transcript' and 'ensembl_species_history'.
+  'ensembl_gene', 'ensembl_transcript' and 'ensembl_species_history'. It also populates the
+  'gene_history' and 'transcript_history' tables accordingly.
 
 =cut
 
