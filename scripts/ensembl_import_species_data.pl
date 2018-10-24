@@ -154,11 +154,19 @@ while (my $slice = shift @$slices) {
 
   my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,ensg_version) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
-  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len,select) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift @$genes) {
     my $sth = $dbc->prepare($sql_gene);
+    
+    # fetch the "select" transcript for this gene
+    my $select_transcript = "";
+    if ($release <= 95) {
+      $select_transcript = $gene->canonical_transcript()->stable_id();
+    } elsif (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
+      $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
+    }
     
     my $ensg = "";
     my $ensg_version = "";
@@ -208,18 +216,7 @@ while (my $slice = shift @$slices) {
       if ($transcript->ccds) {
         $ccds = $transcript->ccds->display_id;
       }
-      ## Correct method for fetching transcript supporting features
-      ## Will not work for human,as supporting features are stored on exon level
-      #my $sfs = $transcript->get_all_supporting_features();
-      #my $supporting_evidence;
-      #foreach my $sf (@$sfs) {
-      #  if ($sf->db_display_name =~ /Uniprot/) {
-      #    $supporting_evidence = $sf->hseqname;
-      #    last;
-      #  }
-      #}
-      
-      #my $supporting_evidence = $transcript->get_all_DBLinks('Uniprot%')->[0];
+
       my $supporting_evidence;
       if (!$supporting_evidence) {
         $supporting_evidence = "";
@@ -230,6 +227,14 @@ while (my $slice = shift @$slices) {
       }
 
       my ($enst,$enst_version) = split(/\./,$transcript->stable_id_version);
+
+      # if this is the "select" transcript for this gene then "select_transcript" will be 1
+      # otherwise it will be 0
+      my $is_select_transcript = 0;
+      if ($select_transcript eq $enst) {
+        $is_select_transcript = 1;
+      }
+      
       my $sth = $dbc->prepare($sql_transcript);
       $sth->bind_param(1,$gene_id);
       $sth->bind_param(2,$enst);
@@ -246,6 +251,7 @@ while (my $slice = shift @$slices) {
       $sth->bind_param(13,$ensp);
       $sth->bind_param(14,$ensp_version);
       $sth->bind_param(15,$ensp_len);
+      $sth->bind_param(16,$is_select_transcript);
       $sth->execute() or die "Could not add transcript entry to GIFTS database for ".$transcript->stable_id."\n".$dbc->errstr;
       #$transcript_id = $sth->{mysql_insertid};
       $transcript_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_transcript","transcript_id");
