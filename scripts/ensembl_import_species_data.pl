@@ -114,7 +114,6 @@ my $meta_adaptor = $registry->get_adaptor($species,'core','MetaContainer');
 my $ca = $registry->get_adaptor($species,'core','CoordSystem');
 my $species_name = $meta_adaptor->get_scientific_name;
 my $tax_id = $meta_adaptor->get_taxonomy_id;
-my $ensdb_release = $meta_adaptor->schema_version;
 my $assembly_name = $ca->fetch_all->[0]->version;
 
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
