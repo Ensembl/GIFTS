@@ -66,7 +66,7 @@ my $registry_port;
 my $user;
 
 my $pipeline_name = "alignment pipeline BLAST";
-my $pipeline_comment = "development run";
+my $pipeline_comment = "production run";
 my $pipeline_invocation = join " ",$0,@ARGV;
 my $species; # ie "homo_sapiens"
 my $perfect_match_alignment_run_id;
