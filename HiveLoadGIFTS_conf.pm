@@ -42,6 +42,7 @@ sub default_options {
 'pipeline_comment_blast_cigar' => 'Blasts and cigars between Ensembl and UniProt proteins.',
 
 'enscode_root_dir' => '/path/to/enscode/',
+'uniprot_dir' => '/path/to/uniprot/knowledgebase/', # path where the UniProt fasta files are stored
 'userstamp' => 'ensembl_gifts_loading_pipeline', # username to be registered as the one loading the Ensembl data
 #'user_r' => '', # read-only user
 'user_w' => '', # write user
@@ -49,6 +50,7 @@ sub default_options {
 'driver' => 'mysql',
 
 'import_species_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/ensembl_import_species_data.pl', # no need to modify this
+'prepare_uniprot_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh', # no need to modify this
 'perfect_match_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pl',   # no need to modify this
 'blast_cigar_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',       # no need to modify this
 
@@ -132,7 +134,17 @@ sub pipeline_analyses {
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         -parameters => {},
         -rc_name          => 'default',
-        -wait_for => ['perfect_match_alignments'],
+        -wait_for => ['prepare_uniprot_files'],
+        -flow_into => { 1 => ['prepare_uniprot_files'] },
+      },
+
+      {
+        -logic_name => 'prepare_uniprot_files',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        -parameters => {
+                          cmd => 'sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' '.$self->o('output_dir')
+                       },
+        -rc_name          => 'default',
         -flow_into => { 1 => ['perfect_match_alignments'] },
       },
 
