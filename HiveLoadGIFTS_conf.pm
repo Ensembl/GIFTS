@@ -49,7 +49,7 @@ sub default_options {
 'driver' => 'mysql',
 
 'import_species_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/ensembl_import_species_data.pl', # no need to modify this
-'prepare_uniprot_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh', # no need to modify this
+'prepare_uniprot_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh',         # no need to modify this
 'perfect_match_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pl',   # no need to modify this
 'blast_cigar_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',       # no need to modify this
 
