@@ -42,7 +42,6 @@ sub default_options {
 'pipeline_comment_blast_cigar' => 'Blasts and cigars between Ensembl and UniProt proteins.',
 
 'enscode_root_dir' => '/path/to/enscode/',
-'uniprot_dir' => '/path/to/uniprot/knowledgebase/', # path where the UniProt fasta files are stored
 'userstamp' => 'ensembl_gifts_loading_pipeline', # username to be registered as the one loading the Ensembl data
 #'user_r' => '', # read-only user
 'user_w' => '', # write user
@@ -67,11 +66,13 @@ sub default_options {
 'giftsdb_schema' => '',
 'giftsdb_port' => '',
 
-'release_mapping_history_id' => 0,
-'uniprot_sp_file' => '',
-'uniprot_sp_isoform_file' => '',
-'uniprot_tr_dir' => '',
-'pipeline_comment' => '',
+'uniprot_dir' => '/path/to/uniprot/knowledgebase/', # path where the UniProt fasta files are stored
+
+# these files will be created during the 'prepare_uniprot_files' analysis
+# from the uniprot_dir files above and they will be used by the perfect match alignment script
+'uniprot_sp_file' => $self->o('output_dir').'/uniprot_sp.cleaned.fa.gz',
+'uniprot_sp_isoform_file' => $self->o('output_dir').'/uniprot_sp_isoforms.cleaned.fa.gz',
+'uniprot_tr_dir' => $self->o('output_dir').'/trembl20/',
 
 # database details for the eHive pipe database
 'server1' => '',
