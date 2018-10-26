@@ -70,6 +70,10 @@ sub default_options {
 
 'uniprot_dir' => '/path/to/uniprot/knowledgebase/', # path where the UniProt fasta files are stored
 
+# output files
+'import_species_data_output_file' => $self->o('output_dir').'/ensembl_import_species_data.out',
+'perfect_match_alignments_output_file' => $self->o('output_dir').'/perfect_match_alignments.out',
+
 # these files will be created during the 'prepare_uniprot_files' analysis
 # from the uniprot_dir files above and they will be used by the perfect match alignment script
 'uniprot_sp_file' => $self->o('output_dir').'/uniprot_sp.cleaned.fa.gz',
@@ -125,7 +129,7 @@ sub pipeline_analyses {
                                  ' -giftsdb_name '.$self->o('giftsdb_name').
                                  ' -giftsdb_schema '.$self->o('giftsdb_schema').
                                  ' -giftsdb_port '.$self->o('giftsdb_port').
-                                 ' > '.$self->o('output_dir')."/ensembl_import_species_data.out"
+                                 ' > '.$self->o('import_species_data_output_file')
                        },
         -rc_name    => 'default',
         -max_retry_count => 0,
@@ -139,7 +143,7 @@ sub pipeline_analyses {
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
                           # 7 days (604800s) max checking every 10 minutes (600s)
-                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('output_dir')."/ensembl_import_species_data.out".
+                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('import_species_data_output_file').
                                  ' | awk \'{print $3}\');'.
                                  'end=$((SECONDS+604800));'.
                                  'while [[ ( $SECONDS -lt $end ) && ( $RELEASEMAPPINGHISTORYID -eq "0" ) ]]; do '.
@@ -186,7 +190,7 @@ sub pipeline_analyses {
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
                           cmd =>
-                                 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('output_dir')."/ensembl_import_species_data.out".
+                                 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('import_species_data_output_file').
                                  ' | awk \'{print $3}\');'.
                                  
                                  'RELEASEMAPPINGHISTORYID='.
@@ -226,7 +230,7 @@ sub pipeline_analyses {
                                  ' -uniprot_tr_dir '.$self->o('uniprot_tr_dir').
                                  ' -pipeline_name '.$self->o('pipeline_name').
                                  ' -pipeline_comment '.$self->o('pipeline_comment_perfect_match').
-                                 ' > '.$self->o('output_dir')."/perfect_match_alignments.out"
+                                 ' > '.$self->o('perfect_match_alignments_output_file')
                        },
         -rc_name    => 'default_10GB',
         -max_retry_count => 0,
@@ -237,7 +241,7 @@ sub pipeline_analyses {
         -logic_name => 'blast_cigar_alignments',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
-                          cmd => 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" '.$self->o('output_dir')."/perfect_match_alignments.out".
+                          cmd => 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" '.$self->o('perfect_match_alignments_output_file').
                                  ' | awk \'{print $3}\');'.
                                  
                                  'perl '.$self->o('blast_cigar_script').
