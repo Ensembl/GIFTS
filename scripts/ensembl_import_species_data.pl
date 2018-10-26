@@ -139,6 +139,7 @@ $sth->bind_param(5,"LOAD_STARTED");
 $sth->execute() or die "Could not add history entry to GIFTS database:\n".$dbc->errstr;
 my $ensembl_species_history_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_species_history","ensembl_species_history_id");
 $sth->finish();
+print("Added ensembl_species_history_id ".$ensembl_species_history_id."\n");
 
 while (my $slice = shift @$slices) {
   # Fetch additional meta data on the slice
