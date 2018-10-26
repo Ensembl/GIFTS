@@ -60,8 +60,10 @@ sub default_options {
 'registry_port' => '',
 
 'giftsdb_host' => '',
-'giftsdb_user' => '',
-'giftsdb_pass' => '',
+'giftsdb_r_user' => '',
+'giftsdb_r_pass' => '',
+'giftsdb_w_user' => '',
+'giftsdb_w_pass' => '',
 'giftsdb_name' => '',
 'giftsdb_schema' => '',
 'giftsdb_port' => '',
@@ -118,24 +120,53 @@ sub pipeline_analyses {
                                  ' -registry_pass '.$self->o('registry_pass').
                                  ' -registry_port '.$self->o('registry_port').
                                  ' -giftsdb_host '.$self->o('giftsdb_host').
-                                 ' -giftsdb_user '.$self->o('giftsdb_user').
-                                 ' -giftsdb_pass '.$self->o('giftsdb_pass').
+                                 ' -giftsdb_user '.$self->o('giftsdb_w_user').
+                                 ' -giftsdb_pass '.$self->o('giftsdb_w_pass').
                                  ' -giftsdb_name '.$self->o('giftsdb_name').
                                  ' -giftsdb_schema '.$self->o('giftsdb_schema').
-                                 ' -giftsdb_port '.$self->o('giftsdb_port')
+                                 ' -giftsdb_port '.$self->o('giftsdb_port').
+                                 ' > '.$self->o('output_dir')."/ensembl_import_species_data.out"
                        },
         -rc_name    => 'default',
+        -max_retry_count => 0,
         -flow_into => { 1 => ['wait_for_uniprot_mappings'] },
       },
 
-      # this analysis will have to be set to DONE to resume the pipeline once UniProt
-      # have loaded their mappings into the GIFTS database
+      # Loop for 7 days maximum to detect if the UniProt mappings have been loaded into
+      # the GIFTS database for the given ensembl_species_history_id.
       {
         -logic_name => 'wait_for_uniprot_mappings',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        -parameters => {},
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        -parameters => {
+                          # 7 days (604800s) max checking every 10 minutes (600s)
+                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('output_dir')."/ensembl_import_species_data.out".
+                                 ' | awk \'{print $3}\');'.
+                                 'end=$((SECONDS+604800));'.
+                                 'while [[ ( $SECONDS -lt $end ) && ( $RELEASEMAPPINGHISTORYID -eq "0" ) ]]; do '.
+                                 
+                                 'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...'.
+                                 'RELEASEMAPPINGHISTORYID='.
+                                 '$(PGPASSWORD='.$self->o('giftsdb_r_pass').
+                                 ' psql -h '.$self->o('giftsdb_host').
+                                 '      -p '.$self->o('giftsdb_port').
+                                 '      -d '.$self->o('giftsdb_name').
+                                 '      -U '.$self->o('giftsdb_r_user').
+                                 '   -t -c "SET search_path TO '.$self->o('giftsdb_schema').'; '.
+                                 '          SELECT release_mapping_history_id '.
+                                 '          FROM release_mapping_history '.
+                                 '          WHERE release_mapping_history_id NOT IN (SELECT release_mapping_history_id '.
+                                 '                                                   FROM alignment_run) '.
+                                 '                AND ensembl_species_history_id=$ENSEMBLSPECIESHISTORYID'.
+                                 '                AND status=\'MAPPING_COMPLETED\''.
+                                 '          ORDER BY time_mapped DESC LIMIT 1;'.
+                                 '         ");'.
+
+                                 'sleep 600;'.
+                                 'done;'.
+                                 'if [ $RELEASEMAPPINGHISTORYID -eq "0" ]; then exit -1;fi'
+                       },
         -rc_name          => 'default',
-        -wait_for => ['prepare_uniprot_files'],
+        -max_retry_count => 0,
         -flow_into => { 1 => ['prepare_uniprot_files'] },
       },
 
@@ -146,6 +177,7 @@ sub pipeline_analyses {
                           cmd => 'sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' '.$self->o('output_dir')
                        },
         -rc_name          => 'default',
+        -max_retry_count => 0,
         -flow_into => { 1 => ['perfect_match_alignments'] },
       },
 
@@ -153,14 +185,31 @@ sub pipeline_analyses {
         -logic_name => 'perfect_match_alignments',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
-                          cmd => 'RELEASEMAPPINGHISTORYID=$(grep "Release mapping history" '.$self->o('output_dir')."/release_mapping_history_id.out".
-                                 ' | awk \'{print $4}\');'.
+                          cmd =>
+                                 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('output_dir')."/ensembl_import_species_data.out".
+                                 ' | awk \'{print $3}\');'.
+                                 
+                                 'RELEASEMAPPINGHISTORYID='.
+                                 '$(PGPASSWORD='.$self->o('giftsdb_r_pass').
+                                 ' psql -h '.$self->o('giftsdb_host').
+                                 '      -p '.$self->o('giftsdb_port').
+                                 '      -d '.$self->o('giftsdb_name').
+                                 '      -U '.$self->o('giftsdb_r_user').
+                                 '   -t -c "SET search_path TO '.$self->o('giftsdb_schema').'; '.
+                                 '          SELECT release_mapping_history_id '.
+                                 '          FROM release_mapping_history '.
+                                 '          WHERE release_mapping_history_id NOT IN (SELECT release_mapping_history_id '.
+                                 '                                                   FROM alignment_run) '.
+                                 '                AND ensembl_species_history_id=$ENSEMBLSPECIESHISTORYID'.
+                                 '                AND status=\'MAPPING_COMPLETED\''.
+                                 '          ORDER BY time_mapped DESC LIMIT 1;'.
+                                 '         ");'.
                                  
                                  'perl '.$self->o('perfect_match_script').
                                  ' -output_dir '.$self->o('output_dir').
                                  ' -giftsdb_host '.$self->o('giftsdb_host').
-                                 ' -giftsdb_user '.$self->o('giftsdb_user').
-                                 ' -giftsdb_pass '.$self->o('giftsdb_pass').
+                                 ' -giftsdb_user '.$self->o('giftsdb_w_user').
+                                 ' -giftsdb_pass '.$self->o('giftsdb_w_pass').
                                  ' -giftsdb_name '.$self->o('giftsdb_name').
                                  ' -giftsdb_schema '.$self->o('giftsdb_schema').
                                  ' -giftsdb_port '.$self->o('giftsdb_port').
@@ -180,6 +229,7 @@ sub pipeline_analyses {
                                  ' > '.$self->o('output_dir')."/perfect_match_alignments.out"
                        },
         -rc_name    => 'default_10GB',
+        -max_retry_count => 0,
         -flow_into => { 1 => ['blast_cigar_alignments'] },
       },
 
@@ -194,8 +244,8 @@ sub pipeline_analyses {
                                  ' -user '.$self->o('userstamp').
                                  ' -perfect_match_alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
                                  ' -giftsdb_host '.$self->o('giftsdb_host').
-                                 ' -giftsdb_user '.$self->o('giftsdb_user').
-                                 ' -giftsdb_pass '.$self->o('giftsdb_pass').
+                                 ' -giftsdb_user '.$self->o('giftsdb_w_user').
+                                 ' -giftsdb_pass '.$self->o('giftsdb_w_pass').
                                  ' -giftsdb_name '.$self->o('giftsdb_name').
                                  ' -giftsdb_schema '.$self->o('giftsdb_schema').
                                  ' -giftsdb_port '.$self->o('giftsdb_port').
@@ -208,6 +258,7 @@ sub pipeline_analyses {
                                  ' -output_dir '.$self->o('output_dir')
                        },
         -rc_name    => 'default_10GB',
+        -max_retry_count => 0,
         -flow_into => { 1 => ['blast_cigar_alignments'] },
       }
     ];
