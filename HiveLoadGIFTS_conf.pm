@@ -35,30 +35,15 @@ sub default_options {
     # inherit other stuff from the base class
 	  %{ $self->SUPER::default_options() },
 
-'output_dir' => '',
-
-'pipeline_name' => 'gifts_loading',
-'pipeline_comment_perfect_match' => 'Perfect matches between Ensembl and UniProt proteins.',
-'pipeline_comment_blast_cigar' => 'Blasts and cigars between Ensembl and UniProt proteins.',
-
 'enscode_root_dir' => '/path/to/enscode/',
-'userstamp' => 'ensembl_gifts_loading_pipeline', # username to be registered as the one loading the Ensembl data
-#'user_r' => '', # read-only user
-'user_w' => '', # write user
-'password' => '', # write password
-'driver' => 'mysql',
 
-'import_species_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/ensembl_import_species_data.pl', # no need to modify this
-'prepare_uniprot_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh',         # no need to modify this
-'perfect_match_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pl',   # no need to modify this
-'blast_cigar_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',       # no need to modify this
+'release' => ,              # Ensembl release number corresponding to the species gene sets to be imported
+'registry_host' => '',      # Ensembl databases server
+'registry_port' => '',      # Ensembl databases port
+'registry_user' => '',      # Ensembl databases read-only user
+'registry_pass' => '',      # Ensembl databases read-only password
 
-'species' => 'homo_sapiens',
-'registry_host' => '',
-'registry_user' => '',
-'registry_pass' => '',
-'registry_port' => '',
-
+# GIFTS database details including read-only (r) and write (w) credentials
 'giftsdb_host' => '',
 'giftsdb_r_user' => '',
 'giftsdb_r_pass' => '',
@@ -70,20 +55,20 @@ sub default_options {
 
 'uniprot_dir' => '/path/to/uniprot/knowledgebase/', # path where the UniProt fasta files are stored
 
-# output files
-'import_species_data_output_file' => $self->o('output_dir').'/ensembl_import_species_data.out',
-'perfect_match_alignments_output_file' => $self->o('output_dir').'/perfect_match_alignments.out',
-
-# these files will be created during the 'prepare_uniprot_files' analysis
-# from the uniprot_dir files above and they will be used by the perfect match alignment script
-'uniprot_sp_file' => $self->o('output_dir').'/uniprot_sp.cleaned.fa.gz',
-'uniprot_sp_isoform_file' => $self->o('output_dir').'/uniprot_sp_isoforms.cleaned.fa.gz',
-'uniprot_tr_dir' => $self->o('output_dir').'/trembl20/',
-
 # database details for the eHive pipe database
 'server1' => '',
 'port1' => '',
-'pipeline_dbname' => '', # this db will be created
+'user_w' => '',      # write user for the pipeline db
+'password' => '',    # write password for the pipeline db
+'driver' => 'mysql', # driver for the pipeline db
+
+# no need to modify anything below this line EXCEPT FOR the 'output_dir' in the 'input_ids' section 
+'userstamp' => 'ensembl_gifts_loading_pipeline', # username to be registered as the one loading the Ensembl data
+'pipeline_name' => 'gifts_loading',
+'pipeline_dbname' => $self->o('pipeline_name'), # this db will be created
+
+'pipeline_comment_perfect_match' => 'Perfect matches between Ensembl and UniProt proteins.',
+'pipeline_comment_blast_cigar' => 'Blasts and cigars between Ensembl and UniProt proteins.',
 
 'pipeline_db' => {
                     -dbname => $self->o('pipeline_dbname'),
@@ -94,6 +79,12 @@ sub default_options {
                     -driver => $self->o('driver'),
                  },
   };
+  
+'import_species_script'  => $self->o('enscode_root_dir').'/GIFTS/scripts/ensembl_import_species_data.pl', # no need to modify this
+'prepare_uniprot_script' => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh',          # no need to modify this
+'perfect_match_script'   => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pl',  # no need to modify this
+'blast_cigar_script'     => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',    # no need to modify this
+  
 }
 
 sub pipeline_create_commands {
@@ -111,17 +102,45 @@ sub pipeline_analyses {
 
     return [
       {
-        -input_ids => [{}],
+        -input_ids  => [
+                         {
+                            species => 'homo_sapiens',
+                            output_dir => '/path/to/GIFTS_#species#/',
+                            # output files
+                            'import_species_data_output_file' => '#output_dir#/ensembl_import_species_data.out',
+                            'perfect_match_alignments_output_file' => '#output_dir#/perfect_match_alignments.out',
+
+                            # these files will be created during the 'prepare_uniprot_files' analysis
+                            # from the uniprot_dir files above and they will be used by the perfect match alignment script
+                            'uniprot_sp_file' => '#output_dir#/uniprot_sp.cleaned.fa.gz',
+                            'uniprot_sp_isoform_file' => '#output_dir#/uniprot_sp_isoforms.cleaned.fa.gz',
+                            'uniprot_tr_dir' => '#output_dir#/trembl20/',
+                         },
+                         {
+                            species => 'mus_musculus',
+                            output_dir => '/path/to/GIFTS_#species#/',
+                            # output files
+                            'import_species_data_output_file' => '#output_dir#/ensembl_import_species_data.out',
+                            'perfect_match_alignments_output_file' => '#output_dir#/perfect_match_alignments.out',
+
+                            # these files will be created during the 'prepare_uniprot_files' analysis
+                            # from the uniprot_dir files above and they will be used by the perfect match alignment script
+                            'uniprot_sp_file' => '#output_dir#/uniprot_sp.cleaned.fa.gz',
+                            'uniprot_sp_isoform_file' => '#output_dir#/uniprot_sp_isoforms.cleaned.fa.gz',
+                            'uniprot_tr_dir' => '#output_dir#/trembl20/',
+                         }
+        ],
+
         -logic_name => 'import_species_data',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
-                          cmd => 'perl '.$self->o('import_species_script').
+                          cmd => 'mkdir -p #output_dir#;'.
+                                 'perl '.$self->o('import_species_script').
                                  ' -user '.$self->o('userstamp').
-                                 ' -species '.$self->o('species').
+                                 ' -species #species#'.
                                  ' -release '.$self->o('release').
                                  ' -registry_host '.$self->o('registry_host').
                                  ' -registry_user '.$self->o('registry_user').
-                                 ' -registry_pass '.$self->o('registry_pass').
                                  ' -registry_port '.$self->o('registry_port').
                                  ' -giftsdb_host '.$self->o('giftsdb_host').
                                  ' -giftsdb_user '.$self->o('giftsdb_w_user').
@@ -129,7 +148,7 @@ sub pipeline_analyses {
                                  ' -giftsdb_name '.$self->o('giftsdb_name').
                                  ' -giftsdb_schema '.$self->o('giftsdb_schema').
                                  ' -giftsdb_port '.$self->o('giftsdb_port').
-                                 ' > '.$self->o('import_species_data_output_file')
+                                 ' > #import_species_data_output_file#'
                        },
         -rc_name    => 'default',
         -max_retry_count => 0,
@@ -143,12 +162,12 @@ sub pipeline_analyses {
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
                           # 7 days (604800s) max checking every 10 minutes (600s)
-                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('import_species_data_output_file').
+                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
                                  ' | awk \'{print $3}\');'.
                                  'end=$((SECONDS+604800));'.
                                  'while [[ ( $SECONDS -lt $end ) && ( $RELEASEMAPPINGHISTORYID -eq "0" ) ]]; do '.
                                  
-                                 'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...'.
+                                 'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...";'.
                                  'RELEASEMAPPINGHISTORYID='.
                                  '$(PGPASSWORD='.$self->o('giftsdb_r_pass').
                                  ' psql -h '.$self->o('giftsdb_host').
@@ -178,7 +197,7 @@ sub pipeline_analyses {
         -logic_name => 'prepare_uniprot_files',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
-                          cmd => 'sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' '.$self->o('output_dir')
+                          cmd => 'sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' #output_dir#'
                        },
         -rc_name          => 'default',
         -max_retry_count => 0,
@@ -189,8 +208,7 @@ sub pipeline_analyses {
         -logic_name => 'perfect_match_alignments',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
-                          cmd =>
-                                 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" '.$self->o('import_species_data_output_file').
+                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
                                  ' | awk \'{print $3}\');'.
                                  
                                  'RELEASEMAPPINGHISTORYID='.
@@ -210,7 +228,7 @@ sub pipeline_analyses {
                                  '         ");'.
                                  
                                  'perl '.$self->o('perfect_match_script').
-                                 ' -output_dir '.$self->o('output_dir').
+                                 ' -output_dir #output_dir#'.
                                  ' -giftsdb_host '.$self->o('giftsdb_host').
                                  ' -giftsdb_user '.$self->o('giftsdb_w_user').
                                  ' -giftsdb_pass '.$self->o('giftsdb_w_pass').
@@ -219,18 +237,17 @@ sub pipeline_analyses {
                                  ' -giftsdb_port '.$self->o('giftsdb_port').
                                  ' -registry_host '.$self->o('registry_host').
                                  ' -registry_user '.$self->o('registry_user').
-                                 ' -registry_pass '.$self->o('registry_pass').
                                  ' -registry_port '.$self->o('registry_port').
                                  ' -user '.$self->o('userstamp').
-                                 ' -species '.$self->o('species').
+                                 ' -species #species#'.
                                  ' -release '.$self->o('release').
                                  ' -release_mapping_history_id $RELEASEMAPPINGHISTORYID'.
-                                 ' -uniprot_sp_file '.$self->o('uniprot_sp_file').
-                                 ' -uniprot_sp_isoform_file '.$self->o('uniprot_sp_isoform_file').
-                                 ' -uniprot_tr_dir '.$self->o('uniprot_tr_dir').
+                                 ' -uniprot_sp_file #uniprot_sp_file#'.
+                                 ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
+                                 ' -uniprot_tr_dir #uniprot_tr_dir#'.
                                  ' -pipeline_name '.$self->o('pipeline_name').
                                  ' -pipeline_comment '.$self->o('pipeline_comment_perfect_match').
-                                 ' > '.$self->o('perfect_match_alignments_output_file')
+                                 ' > #perfect_match_alignments_output_file#'
                        },
         -rc_name    => 'default_10GB',
         -max_retry_count => 0,
@@ -241,7 +258,7 @@ sub pipeline_analyses {
         -logic_name => 'blast_cigar_alignments',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
-                          cmd => 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" '.$self->o('perfect_match_alignments_output_file').
+                          cmd => 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
                                  ' | awk \'{print $3}\');'.
                                  
                                  'perl '.$self->o('blast_cigar_script').
@@ -255,11 +272,10 @@ sub pipeline_analyses {
                                  ' -giftsdb_port '.$self->o('giftsdb_port').
                                  ' -registry_host '.$self->o('registry_host').
                                  ' -registry_user '.$self->o('registry_user').
-                                 ' -registry_pass '.$self->o('registry_pass').
                                  ' -registry_port '.$self->o('registry_port').
                                  ' -pipeline_name '.$self->o('pipeline_name').
                                  ' -pipeline_comment '.$self->o('pipeline_comment_blast_cigar').
-                                 ' -output_dir '.$self->o('output_dir')
+                                 ' -output_dir #output_dir#'
                        },
         -rc_name    => 'default_10GB',
         -max_retry_count => 0,
