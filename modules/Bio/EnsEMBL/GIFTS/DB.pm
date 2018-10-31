@@ -303,7 +303,7 @@ sub store_cigarmdz {
 
   # get uniprot_id and transcript_id by alignment_id
   my $sql_select_alignment = "SELECT uniprot_id,transcript_id FROM alignment WHERE alignment_id=?";
-  my $sth = $dbc->prepare($sql_select_alignment);
+  $sth = $dbc->prepare($sql_select_alignment);
   $sth->bind_param(1,$alignment_id,SQL_INTEGER);
   $sth->execute();
   my ($uniprot_id,$transcript_id) = $sth->fetchrow_array();
