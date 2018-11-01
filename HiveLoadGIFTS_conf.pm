@@ -134,6 +134,8 @@ sub pipeline_analyses {
         -logic_name => 'import_species_data',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                           cmd => 'mkdir -p #output_dir#;'.
                                  'perl '.$self->o('import_species_script').
                                  ' -user '.$self->o('userstamp').
@@ -161,6 +163,8 @@ sub pipeline_analyses {
         -logic_name => 'wait_for_uniprot_mappings',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                           # 7 days (604800s) max checking every 10 minutes (600s)
                           cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
                                  ' | awk \'{print $3}\');'.
@@ -197,6 +201,8 @@ sub pipeline_analyses {
         -logic_name => 'prepare_uniprot_files',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                           cmd => 'sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' #output_dir#'
                        },
         -rc_name          => 'default',
@@ -208,6 +214,8 @@ sub pipeline_analyses {
         -logic_name => 'perfect_match_alignments',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                           cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
                                  ' | awk \'{print $3}\');'.
                                  
@@ -258,6 +266,8 @@ sub pipeline_analyses {
         -logic_name => 'blast_cigar_alignments',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                           cmd => 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
                                  ' | awk \'{print $3}\');'.
                                  
