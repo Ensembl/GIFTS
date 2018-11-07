@@ -257,7 +257,7 @@ sub pipeline_analyses {
                                  ' -pipeline_comment '.$self->o('pipeline_comment_perfect_match').
                                  ' > #perfect_match_alignments_output_file#'
                        },
-        -rc_name    => 'default_10GB',
+        -rc_name    => 'default_25GB',
         -max_retry_count => 0,
         -flow_into => { 1 => ['blast_cigar_alignments'] },
       },
@@ -287,7 +287,7 @@ sub pipeline_analyses {
                                  ' -pipeline_comment '.$self->o('pipeline_comment_blast_cigar').
                                  ' -output_dir #output_dir#'
                        },
-        -rc_name    => 'default_10GB',
+        -rc_name    => 'default_50GB',
         -max_retry_count => 0,
         -flow_into => { 1 => ['blast_cigar_alignments'] },
       }
@@ -306,7 +306,8 @@ sub resource_classes {
     my $self = shift;
     return {
       'default' => { LSF => '-M1900 -R"select[mem>1900] rusage[mem=1900]"' },
-      'default_10GB' => { LSF => '-M10000 -R"select[mem>10000] rusage[mem=10000]"' },
+      'default_25GB' => { LSF => '-M25000 -R"select[mem>25000] rusage[mem=25000]"' },
+      'default_50GB' => { LSF => '-M50000 -R"select[mem>50000] rusage[mem=50000]"' },
     }
   }
 
