@@ -31,7 +31,7 @@ eu_alignment_blast_cigar.pl -
 =head1 DESCRIPTION
 
   This script maps Ensembl gene sets on to Uniprot proteins by using blastp and makes
-  the cigar plus and md strings.
+  the cigar plus and md strings by using muscle.
 
 =cut
 
