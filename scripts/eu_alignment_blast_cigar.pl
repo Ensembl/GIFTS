@@ -78,6 +78,7 @@ my $pipeline_invocation = join " ",$0,@ARGV;
 my $perfect_match_alignment_run_id;
 my $write_blast = 1;
 my $write_cigar = 1;
+my $mapping_id = 0;
 
 my $cigar_id_count=0;
 
@@ -100,6 +101,7 @@ GetOptions(
         'pipeline_comment=s' => \$pipeline_comment,
         'write_cigar=i' => \$write_cigar,
         'write_blast=i' => \$write_blast,
+        'mapping_id=i' => \$mapping_id,
    );
 
 if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
@@ -231,6 +233,8 @@ print "Opened uniprot archives\n";
 # fetch the items we want to update
 my $sql_gifts_process_list = "SELECT mapping_id,uniprot_id,transcript_id FROM alignment WHERE alignment_run_id=".$perfect_match_alignment_run_id.
   " AND score1=0";
+$sql_gifts_process_list .= " AND mapping_id=".$mapping_id if ($mapping_id); # given a mapping id the blast will be run for it only instead of for all the mappings
+
 my $sth_gifts_process_list = $dbc->prepare($sql_gifts_process_list);
 $sth_gifts_process_list->execute() or die "Could not fetch the list or alignments to process:\n".$dbc->errstr;
 
