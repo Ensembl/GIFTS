@@ -237,7 +237,7 @@ $sth_gifts_process_list->execute() or die "Could not fetch the list or alignment
 # Add the alignment run into the database
 my $alignment_run_id = -1;
 if ($write_blast) {
-  my $sql_alignment_run = "INSERT INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+  my $sql_alignment_run = "INSERT IGNORE INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
   my $sth = $dbc->prepare($sql_alignment_run);
   $sth->bind_param(1,'identity');
   $sth->bind_param(2,'coverage');
