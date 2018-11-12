@@ -259,9 +259,102 @@ sub pipeline_analyses {
                                  ' -pipeline_comment '.$self->o('pipeline_comment_perfect_match').
                                  ' > #perfect_match_alignments_output_file#'
                        },
-        -rc_name    => 'default_25GB',
+        -rc_name    => 'default_30GB',
         -max_retry_count => 0,
-        -flow_into => { 1 => ['blast_cigar_alignments'] },
+        -flow_into => { 1 => ['insert_alignment_run_id'] },
+      },
+
+      {
+        -logic_name => 'insert_alignment_run_id_for_blast',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
+                          cmd =>
+                                 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
+                                 ' | awk \'{print $3}\');'.
+
+                                 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
+                                 ' | awk \'{print $3}\');'.
+
+                                 'RELEASEMAPPINGHISTORYID='.
+                                 '$(PGPASSWORD='.$self->o('giftsdb_r_pass').
+                                 ' psql -h '.$self->o('giftsdb_host').
+                                 '      -p '.$self->o('giftsdb_port').
+                                 '      -d '.$self->o('giftsdb_name').
+                                 '      -U '.$self->o('giftsdb_r_user').
+                                 '   -t -c "SET search_path TO '.$self->o('giftsdb_schema').'; '.
+                                 '          SELECT release_mapping_history_id '.
+                                 '          FROM alignment_run '.
+                                 '          WHERE alignment_run_id=$PERFECTMATCHALIGNMENTRUNID;'.
+                                 '         "'.
+                                 ' );'.
+
+                                 'PGPASSWORD='.$self->o('giftsdb_w_pass').
+                                 ' psql -h '.$self->o('giftsdb_host').
+                                 '      -p '.$self->o('giftsdb_port').
+                                 '      -d '.$self->o('giftsdb_name').
+                                 '      -U '.$self->o('giftsdb_w_user').
+                                 '   -t -c "SET search_path TO '.$self->o('giftsdb_schema').'; '.
+                                 '          INSERT INTO alignment_run '.
+                                 '          (score1_type,'.
+                                 '           score2_type,'.
+                                 '           pipeline_name,'.
+                                 '           pipeline_comment,'.
+                                 '           pipeline_script,'.
+                                 '           userstamp,'.
+                                 '           release_mapping_history_id,'.
+                                 '           logfile_dir,'.
+                                 '           uniprot_file_swissprot,'.
+                                 '           uniprot_file_isoform,'.
+                                 '           uniprot_dir_trembl,'.
+                                 '           ensembl_release)'.
+                                 '          VALUES('.
+                                 '           \'identity\','.
+                                 '           \'coverage\','.
+                                 '           \''.$self->o('pipeline_name').'\','.
+                                 '           \''.$self->o('pipeline_comment_blast_cigar').'\','.
+                                 '           \'GIFTS/scripts/eu_alignment_blast_cigar.pl\','.                                 
+                                 '           \''.$self->o('userstamp').'\','.
+                                 '           $RELEASEMAPPINGHISTORYID ,'.
+                                 '           \'#output_dir#\','.
+                                 '           \'#uniprot_sp_file#\','.
+                                 '           \'#uniprot_sp_isoform_file#\','.
+                                 '           \'#uniprot_tr_dir#\','.
+                                             $self->o('release').'); '.
+                                 '          SELECT lastval() FROM alignment_run;"'.
+                                 ' > #alignment_run_id_output_file#'
+                       },
+        -rc_name    => 'default',
+        -max_retry_count => 0,
+        -flow_into => { 1 => ['make_mapping_input_ids'] },
+      },
+
+      {
+        -logic_name => 'make_mapping_input_ids',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        -parameters => {
+                          inputcmd =>
+                           
+                          'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
+                          ' | awk \'{print $3}\');'.
+ 
+                          ' PGPASSWORD='.$self->o('giftsdb_r_pass').
+                          ' psql -h '.$self->o('giftsdb_host').
+                          '      -p '.$self->o('giftsdb_port').
+                          '      -d '.$self->o('giftsdb_name').
+                          '      -U '.$self->o('giftsdb_r_user').
+                          '   -t -c "SET search_path TO '.$self->o('giftsdb_schema').'; '.
+                          '          SELECT mapping_id '.
+                          '          FROM alignment '.
+                          '          WHERE alignment_run_id=$PERFECTMATCHALIGNMENTRUNID'.
+                          '            AND score1=0;"',
+                           
+                          column_names => ['mapping_id'],
+                          step => 100,
+        },
+        -flow_into => { '2->A' => [ 'blast_cigar_alignments' ],
+                        'A->1' => [ 'dummy' ]}
       },
 
       {
@@ -270,9 +363,12 @@ sub pipeline_analyses {
         -parameters => {
                           use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
                           use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
-                          cmd => 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
+                          cmd =>
+                                 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
                                  ' | awk \'{print $3}\');'.
-                                 
+
+                                 'ALIGNMENTRUNID=$(head -n1 #alignment_run_id_output_file# | awk \'{print $1}\');'.
+
                                  'perl '.$self->o('blast_cigar_script').
                                  ' -user '.$self->o('userstamp').
                                  ' -perfect_match_alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
@@ -286,15 +382,34 @@ sub pipeline_analyses {
                                  ' -registry_user '.$self->o('registry_user').
                                  ' -registry_port '.$self->o('registry_port').
                                  ' -pipeline_name '.$self->o('pipeline_name').
-                                 ' -pipeline_comment '.$self->o('pipeline_comment_blast_cigar').
-                                 ' -output_dir #output_dir#'
+                                 ' -pipeline_comment "'.$self->o('pipeline_comment_blast_cigar').'"'.
+                                 ' -output_dir #output_dir#'.
+                                 ' -alignment_run_id $ALIGNMENTRUNID'.
+                                 ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
                        },
-        -rc_name    => 'default_50GB',
+        -rc_name    => 'default_18GB',
         -max_retry_count => 0,
-        -flow_into => { 1 => ['blast_cigar_alignments'] },
-      }
+        -analysis_capacity => 50,
+      },
+
+      {
+        -logic_name => 'dummy',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        -parameters => {},
+        -rc_name       => 'default',
+        -can_be_empty  => 1,
+      },      
+      
     ];
   }
+
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    };
+}
 
 sub pipeline_wide_parameters {
     my ($self) = @_;
@@ -308,8 +423,8 @@ sub resource_classes {
     my $self = shift;
     return {
       'default' => { LSF => '-M1900 -R"select[mem>1900] rusage[mem=1900]"' },
-      'default_25GB' => { LSF => '-M25000 -R"select[mem>25000] rusage[mem=25000]"' },
-      'default_50GB' => { LSF => '-M50000 -R"select[mem>50000] rusage[mem=50000]"' },
+      'default_18GB' => { LSF => '-M18000 -R"select[mem>18000] rusage[mem=18000]"' },
+      'default_30GB' => { LSF => '-M30000 -R"select[mem>30000] rusage[mem=30000]"' },
     }
   }
 
