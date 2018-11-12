@@ -109,6 +109,7 @@ sub pipeline_analyses {
                             # output files
                             'import_species_data_output_file' => '#output_dir#/ensembl_import_species_data.out',
                             'perfect_match_alignments_output_file' => '#output_dir#/perfect_match_alignments.out',
+                            'alignment_run_id_output_file' => '#output_dir#/alignment_run_id.out',
 
                             # these files will be created during the 'prepare_uniprot_files' analysis
                             # from the uniprot_dir files above and they will be used by the perfect match alignment script
@@ -122,6 +123,7 @@ sub pipeline_analyses {
                             # output files
                             'import_species_data_output_file' => '#output_dir#/ensembl_import_species_data.out',
                             'perfect_match_alignments_output_file' => '#output_dir#/perfect_match_alignments.out',
+                            'alignment_run_id_output_file' => '#output_dir#/alignment_run_id.out',
 
                             # these files will be created during the 'prepare_uniprot_files' analysis
                             # from the uniprot_dir files above and they will be used by the perfect match alignment script
