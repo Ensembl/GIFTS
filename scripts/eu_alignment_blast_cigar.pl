@@ -31,7 +31,7 @@ eu_alignment_blast_cigar.pl -
 =head1 DESCRIPTION
 
   This script maps Ensembl gene sets on to Uniprot proteins by using blastp and makes
-  the cigar plus and md strings.
+  the cigar plus and md strings by using muscle.
 
 =cut
 
@@ -73,6 +73,9 @@ my $perfect_match_alignment_run_id;
 my $write_blast = 1;
 my $write_cigar = 1;
 
+my $mapping_id = "";
+my $alignment_run_id = 0;
+
 my $cigar_id_count=0;
 
 GetOptions(
@@ -89,6 +92,8 @@ GetOptions(
         'pipeline_comment=s' => \$pipeline_comment,
         'write_cigar=i' => \$write_cigar,
         'write_blast=i' => \$write_blast,
+        'mapping_id=s' => \$mapping_id,
+        'alignment_run_id=i' => \$alignment_run_id
    );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -108,17 +113,23 @@ if (!$perfect_match_alignment_run_id) {
       "This should be the alignment_run_id in the GIFTs database of a run of the eu_alignment_perfect_match script.");
 }
 
+# remove trailing comma and duplicate commas if any
+$mapping_id =~ s/,$//;
+$mapping_id =~ s/,,/,/;
+
+my ($first_mapping_id) = $mapping_id =~ /(\d+)/;
+
 # Process options for the output files
 
 mkdir($output_dir) unless(-d $output_dir);
-my $output_file_debug = $output_dir."/".$output_prefix."-debug.txt";
-my $output_file_noseqs = $output_dir."/".$output_prefix."-no_seqs.txt";
+my $output_file_debug = $output_dir."/".$output_prefix.$first_mapping_id."-debug.txt";
+my $output_file_noseqs = $output_dir."/".$output_prefix.$first_mapping_id."-no_seqs.txt";
 
 open DEBUG_INFO,">".$output_file_debug or die print "Can't open output debug file ".$output_file_debug."\n";
 open UNIPROT_NOSEQS,">".$output_file_noseqs or die print "Can't open output no sequence file ".$output_file_noseqs."\n";
 
 # The file for uniprot sequences to be written to (will change when parallelized)
-my $useq_file = $output_dir."/uniprot_seq.fa";
+my $useq_file = $output_dir."/uniprot_seq_".$first_mapping_id.".fa";
 
 # Set the OPTIONS for the GIFTS database
 
@@ -197,9 +208,7 @@ print "Opened uniprot archives\n";
 my @alignments = rest_get("/alignments/align_run/".$perfect_match_alignment_run_id); # check real name for endpoint to fetch alignments by alignment run id
 
 # Add the alignment run into the database
-my $alignment_run_id = -1;
 if ($write_blast) {
-
   my $alignment_run = {
                          score1_type => "identity",
                          score2_type => "coverage",
@@ -242,10 +251,13 @@ my $analysis_obj = new Bio::EnsEMBL::Analysis(
       -web_data        => 'eu_blastp'
    );
 
+my %mapping_id_hash = {};
+$mapping_id_hash{$_}++ for (split(/,/,$mapping_id));
+
 # the main loop
 ALIGNMENT: foreach my $alignment (@alignments) {
 
-  if ($alignment->{'score1'}) {
+  if ($alignment->{'score1'} or ($mapping_id and !exists($mapping_id_hash{$alignment->{'mapping_id'}}))) {
     # we want to loop through the aligments whose score1 is 0
     # score1 = 0 means there was not perfect match
     # score1 = 1 means there was a perfect match
