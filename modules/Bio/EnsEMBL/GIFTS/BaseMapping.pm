@@ -410,26 +410,31 @@ sub make_md_string {
   return $md;
 }
 
-# run muscle on one pair of items - not parallel safe
+# run muscle on one pair of Bio::Seq objects
 sub run_muscle {
-  my($seqobj_u,$seqobj_e,$folder_muscle) = @_;
+  my ($seqobj_u,$seqobj_e,$folder_muscle) = @_;
+
+  my $file_id_string = $seqobj_u->display_id()."_".$seqobj_e->display_id();
 
   # write out and process a file with the pair of sequences to be compared
-  my $muscle_source_filename =  "$folder_muscle/for_muscle.fasta";
-  my $muscle_output_filename =  "$folder_muscle/from_muscle.fasta";
+  my $muscle_source_filename =  "$folder_muscle/for_muscle_".$file_id_string.".fasta";
+  my $muscle_output_filename =  "$folder_muscle/from_muscle_".$file_id_string.".fasta";
   my $muscle_source = Bio::SeqIO->new(-file => ">$muscle_source_filename",'-format' => 'fasta');
   $muscle_source->write_seq($seqobj_u);
   $muscle_source->write_seq($seqobj_e);
-  $muscle_source->close;
+  $muscle_source->close();
 
   system("muscle -in $muscle_source_filename -out $muscle_output_filename -quiet");
 
   # open the muscle file for processing
   my $compared =  Bio::SeqIO->new(-file => $muscle_output_filename,-format => "fasta");
-  my $seqobj_compu = $compared->next_seq;
-  my $seqobj_compe = $compared->next_seq;
+  my $seqobj_compu = $compared->next_seq();
+  my $seqobj_compe = $compared->next_seq();
 
-  return($seqobj_compu,$seqobj_compe);
+  unlink $muscle_source_filename or die ("Could not delete $muscle_source_filename");
+  unlink $muscle_output_filename or die ("Could not delete $muscle_output_filename");
+
+  return ($seqobj_compu,$seqobj_compe);
 }
 
 #
