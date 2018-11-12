@@ -78,7 +78,8 @@ my $pipeline_invocation = join " ",$0,@ARGV;
 my $perfect_match_alignment_run_id;
 my $write_blast = 1;
 my $write_cigar = 1;
-my $mapping_id = 0;
+my $mapping_id = "";
+my $alignment_run_id = 0;
 
 my $cigar_id_count=0;
 
@@ -101,7 +102,8 @@ GetOptions(
         'pipeline_comment=s' => \$pipeline_comment,
         'write_cigar=i' => \$write_cigar,
         'write_blast=i' => \$write_blast,
-        'mapping_id=i' => \$mapping_id,
+        'mapping_id=s' => \$mapping_id,
+        'alignment_run_id=i' => \$alignment_run_id
    );
 
 if (!$giftsdb_name or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
@@ -121,17 +123,23 @@ if (!$perfect_match_alignment_run_id) {
       "This should be the alignment_run_id in the GIFTs database of a run of the eu_alignment_perfect_match script.");
 }
 
+# remove trailing comma and duplicate commas if any
+$mapping_id =~ s/,$//;
+$mapping_id =~ s/,,/,/;
+
+my ($first_mapping_id) = $mapping_id =~ /(\d+)/;
+
 # Process options for the output files
 
 mkdir($output_dir) unless(-d $output_dir);
-my $output_file_debug = $output_dir."/".$output_prefix."-debug.txt";
-my $output_file_noseqs = $output_dir."/".$output_prefix."-no_seqs.txt";
+my $output_file_debug = $output_dir."/".$output_prefix.$first_mapping_id."-debug.txt";
+my $output_file_noseqs = $output_dir."/".$output_prefix.$first_mapping_id."-no_seqs.txt";
 
 open DEBUG_INFO,">".$output_file_debug or die print "Can't open output debug file ".$output_file_debug."\n";
 open UNIPROT_NOSEQS,">".$output_file_noseqs or die print "Can't open output no sequence file ".$output_file_noseqs."\n";
 
 # The file for uniprot sequences to be written to (will change when parallelized)
-my $useq_file = $output_dir."/uniprot_seq.fa";
+my $useq_file = $output_dir."/uniprot_seq_".$first_mapping_id.".fa";
 
 # Set the OPTIONS for the GIFTS database
 
@@ -233,15 +241,20 @@ print "Opened uniprot archives\n";
 # fetch the items we want to update
 my $sql_gifts_process_list = "SELECT mapping_id,uniprot_id,transcript_id FROM alignment WHERE alignment_run_id=".$perfect_match_alignment_run_id.
   " AND score1=0";
-$sql_gifts_process_list .= " AND mapping_id=".$mapping_id if ($mapping_id); # given a mapping id the blast will be run for it only instead of for all the mappings
+$sql_gifts_process_list .= " AND mapping_id IN (".$mapping_id.")" if ($mapping_id); # given a mapping id the blast will be run for it only instead of for all the mappings
 
 my $sth_gifts_process_list = $dbc->prepare($sql_gifts_process_list);
 $sth_gifts_process_list->execute() or die "Could not fetch the list or alignments to process:\n".$dbc->errstr;
 
 # Add the alignment run into the database
-my $alignment_run_id = -1;
 if ($write_blast) {
-  my $sql_alignment_run = "INSERT IGNORE INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+  my $sql_alignment_run = "";
+  if ($alignment_run_id) {
+    $sql_alignment_run = "INSERT INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release,alignment_run_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING";
+  } else {
+    $sql_alignment_run = "INSERT INTO alignment_run (score1_type,score2_type,pipeline_name,pipeline_comment,pipeline_script,userstamp,release_mapping_history_id,logfile_dir,uniprot_file_swissprot,uniprot_file_isoform,uniprot_dir_trembl,ensembl_release) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT DO NOTHING";
+  }
+  
   my $sth = $dbc->prepare($sql_alignment_run);
   $sth->bind_param(1,'identity');
   $sth->bind_param(2,'coverage');
@@ -259,9 +272,16 @@ if ($write_blast) {
   }
   $sth->bind_param(11,$uniprot_tr_dir);
   $sth->bind_param(12,$release);
+  
+  if ($alignment_run_id) {
+    $sth->bind_param(13,$alignment_run_id);
+  }
 
-  $sth->execute() or die "Could not add the alignment run:\n".$dbc->errstr;
-  $alignment_run_id = $dbc->last_insert_id(undef,undef,"alignment_run","alignment_run_id");
+  $sth->execute() or die "Could not add the alignment run $alignment_run_id:\n".$dbc->errstr;
+  
+  if (!$alignment_run_id) {
+    $alignment_run_id = $dbc->last_insert_id(undef,undef,"alignment_run","alignment_run_id");
+  }
   $sth->finish();
   print("Alignment run $alignment_run_id\n");
 }
