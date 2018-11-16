@@ -112,9 +112,16 @@ while (my $slice = shift(@$slices)) {
   
   my @json_genes = ();
   my $genes = $slice->get_all_Genes();
+
   while (my $gene = shift(@$genes)) {
 
     my ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
+    
+    # fetch the "select" transcript for this gene
+    my $select_transcript = "";
+    if ($release <= 95) {
+      $select_transcript = $gene->canonical_transcript()->stable_id();
+    }
 
     my $gene_name = "";
     my $gene_symbol = "";
@@ -128,13 +135,6 @@ while (my $slice = shift(@$slices)) {
     if ($gene->display_xref()) {
       $gene_symbol = $gene->display_xref()->display_id();
     }
-
-    # fetch the "select" transcript for this gene
-    my $select_transcript = "";
-    if (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
-      $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
-    }
-    
 
     my $json_gene = {
                        ensg_id => $ensg,
@@ -183,8 +183,17 @@ while (my $slice = shift(@$slices)) {
       # if this is the "select" transcript for this gene then "select_transcript" will be 1
       # otherwise it will be 0
       my $is_select_transcript = 0;
-      if ($select_transcript eq $enst) {
+      if ($release >= 96) {
+        $is_select_transcript = 0;
+        foreach my $transcript_attrib (@{$transcript->get_all_Attributes('remark')}) {
+          if ($transcript_attrib->value() eq "MANE_select") {
+            $is_select_transcript = 1;
+          }
+        }
+      } else {
+       if ($select_transcript eq $enst) {
         $is_select_transcript = 1;
+        }
       }
 
       my $json_transcript = {
@@ -202,7 +211,7 @@ while (my $slice = shift(@$slices)) {
                                seq_region_end => $transcript->seq_region_end(),
                                supporting_evidence => $supporting_evidence,
                                userstamp => $user,
-                               'select' => $is_select_transcript
+                               select => $is_select_transcript
       };
       push($json_transcript,@{$json_gene->{'transcripts'}});
       $transcript_count++;
