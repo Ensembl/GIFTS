@@ -166,9 +166,9 @@ while (my $slice = shift @$slices) {
     my $select_transcript = "";
     if ($release <= 95) {
       $select_transcript = $gene->canonical_transcript()->stable_id();
-    } elsif (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
-      $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
-    }
+    }# elsif (scalar(@{$gene->get_all_Attributes('select_transcript')}) > 0) {
+    # $select_transcript = @{$gene->get_all_Attributes('select_transcript')}[0]->value();
+    #}
 
     my $gene_accession = "";
     my $gene_name = "";
@@ -245,8 +245,17 @@ while (my $slice = shift @$slices) {
       # if this is the "select" transcript for this gene then "select_transcript" will be 1
       # otherwise it will be 0
       my $is_select_transcript = 0;
-      if ($select_transcript eq $enst) {
+      if ($release >= 96) {
+        $is_select_transcript = 0;
+        foreach my $transcript_attrib (@{$transcript->get_all_Attributes('remark')}) {
+          if ($transcript_attrib->value() eq "MANE_select") {
+            $is_select_transcript = 1;
+          }
+        }
+      } else {
+       if ($select_transcript eq $enst) {
         $is_select_transcript = 1;
+        }
       }
       
       my $sth = $dbc->prepare($sql_transcript);
