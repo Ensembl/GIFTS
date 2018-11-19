@@ -196,12 +196,15 @@ while (my $slice = shift @$slices) {
     
     # gene_symbol
     if ($gene->display_xref) {
-      $sth->bind_param(12,$gene->display_xref()->display_id());
+      #$sth->bind_param(12,$gene->display_xref()->display_id());
+      $sth->bind_param(11,$gene->display_xref()->display_id());
     } else {
-      $sth->bind_param(12,"");
+      #$sth->bind_param(12,"");
+      $sth->bind_param(11,"");
     }
     
-    $sth->bind_param(13,$gene_accession);
+    #$sth->bind_param(13,$gene_accession);
+    $sth->bind_param(12,$gene_accession);
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
     $gene_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_gene","gene_id");
     $sth->finish();
