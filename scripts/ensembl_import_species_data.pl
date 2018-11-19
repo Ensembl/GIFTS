@@ -157,7 +157,7 @@ while (my $slice = shift @$slices) {
   #my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,ensg_version,gene_symbol,gene_accession) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
   my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,gene_symbol,gene_accession) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
 
-  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len,select) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len,\"select\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift @$genes) {
