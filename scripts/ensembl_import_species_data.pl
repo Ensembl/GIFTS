@@ -46,6 +46,10 @@ use Bio::EnsEMBL::Mapper;
 use Data::Dumper;
 use Bio::EnsEMBL::GIFTS::DB qw(get_gifts_dbc);
 
+my $GENE_NAME_MAX_LENGTH = 255;
+my $GENE_SYMBOL_MAX_LENGTH = 30;
+my $GENE_ACCESSION_MAX_LENGTH = 30;
+
 #options that the user can set
 my $species = 'homo_sapiens';
 my $user;
@@ -185,7 +189,7 @@ while (my $slice = shift @$slices) {
     
     $sth->bind_param(1,$ensg);
     #$sth->bind_param(2,$gene_name);
-    $sth->bind_param(2,substr($gene_name,0,30));
+    $sth->bind_param(2,substr($gene_name,0,$GENE_NAME_MAX_LENGTH));
     $sth->bind_param(3,$chromosome);
     $sth->bind_param(4,$region_accession);
     $sth->bind_param(5,0);
@@ -199,14 +203,14 @@ while (my $slice = shift @$slices) {
     # gene_symbol
     if ($gene->display_xref) {
       #$sth->bind_param(12,$gene->display_xref()->display_id());
-      $sth->bind_param(11,$gene->display_xref()->display_id());
+      $sth->bind_param(11,substr($gene->display_xref()->display_id(),0,$GENE_SYMBOL_MAX_LENGTH));
     } else {
       #$sth->bind_param(12,"");
       $sth->bind_param(11,"");
     }
     
     #$sth->bind_param(13,$gene_accession);
-    $sth->bind_param(12,$gene_accession);
+    $sth->bind_param(12,substr($gene_accession,0,$GENE_ACCESSION_MAX_LENGTH));
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
     $gene_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_gene","gene_id");
     $sth->finish();
