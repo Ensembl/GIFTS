@@ -159,10 +159,10 @@ while (my $slice = shift @$slices) {
   }
 
   #my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,ensg_version,gene_symbol,gene_accession) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,gene_symbol,gene_accession) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+  my $sql_gene = "INSERT INTO ensembl_gene (ensg_id,gene_name,chromosome,region_accession,deleted,seq_region_start,seq_region_end,seq_region_strand,biotype,time_loaded,gene_symbol,gene_accession,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
   #my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_version,ensp_len,\"select\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
-  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_len,\"select\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+  my $sql_transcript = "INSERT INTO ensembl_transcript (gene_id,enst_id,ccds_id,uniparc_accession,biotype,deleted,seq_region_start,seq_region_end,supporting_evidence,userstamp,time_loaded,enst_version,ensp_id,ensp_len,\"select\",source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
 
   my $genes = $slice->get_all_Genes();
   while (my $gene = shift @$genes) {
@@ -211,6 +211,7 @@ while (my $slice = shift @$slices) {
     
     #$sth->bind_param(13,$gene_accession);
     $sth->bind_param(12,substr($gene_accession,0,$GENE_ACCESSION_MAX_LENGTH));
+    $sth->bind_param(13,$gene->source());
     $sth->execute() or die "Could not add gene entry to GIFTS database for ".$gene->stable_id."\n".$dbc->errstr;
     $gene_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_gene","gene_id");
     $sth->finish();
@@ -287,6 +288,7 @@ while (my $slice = shift @$slices) {
       #$sth->bind_param(16,$is_select_transcript);
       $sth->bind_param(14,$ensp_len);
       $sth->bind_param(15,$is_select_transcript);
+      $sth->bind_param(16,$transcript->source());
       $sth->execute() or die "Could not add transcript entry to GIFTS database for ".$transcript->stable_id."\n".$dbc->errstr;
       #$transcript_id = $sth->{mysql_insertid};
       $transcript_id = $dbc->last_insert_id(undef,$giftsdb_schema,"ensembl_transcript","transcript_id");
