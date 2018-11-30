@@ -226,6 +226,21 @@ while (my $slice = shift @$slices) {
     $sth->finish();
 
     $gene_count++;
+    
+    # find out if the MANE transcript has been defined for the current gene
+    my $MANE_transcript_found = 0;
+    TRANSCRIPT: foreach my $transcript (@{$gene->get_all_Transcripts}) {
+      foreach my $transcript_attrib (@{$transcript->get_all_Attributes('remark')}) {
+        if ($transcript_attrib->value() eq "MANE_select") {
+          $MANE_transcript_found = 1;
+          last TRANSCRIPT;
+        }
+      }
+    }
+    
+    # the canonical transcript stable ID will be used as "select_transcript" if no MANE transcript is found
+    my $canonical_transcript_sid = $gene->canonical_transcript()->stable_id();
+    
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
       my ($start_exon,$end_exon,$start_exon_seq_offset,$end_exon_seq_offset,$start_exon_id,$end_exon_id);
 
@@ -256,16 +271,19 @@ while (my $slice = shift @$slices) {
       # if this is the "select" transcript for this gene then "select_transcript" will be 1
       # otherwise it will be 0
       my $is_select_transcript = 0;
-      if ($release >= 96) {
-        $is_select_transcript = 0;
+      if ($release >= 96 and $MANE_transcript_found) {
         foreach my $transcript_attrib (@{$transcript->get_all_Attributes('remark')}) {
           if ($transcript_attrib->value() eq "MANE_select") {
             $is_select_transcript = 1;
           }
         }
+      } elsif ($release >= 96 and !($MANE_transcript_found)) {
+        if ($enst eq $canonical_transcript_sid) {
+          $is_select_transcript = 1;
+        }
       } else {
-       if ($select_transcript eq $enst) {
-        $is_select_transcript = 1;
+        if ($select_transcript eq $enst) {
+          $is_select_transcript = 1;
         }
       }
       
