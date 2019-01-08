@@ -117,8 +117,16 @@ while (my $slice = shift(@$slices)) {
     my ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
 
     my $gene_name = "";
+    my $gene_symbol = "";
+    my $gene_accession = "";
+
+    if ($gene->description() =~ /(.+)\[.+Acc:(.+)\]/) {
+      $gene_name = $1;
+      $gene_accession = $2;
+    }
+
     if ($gene->display_xref()) {
-      $gene_name = $gene->display_xref()->display_id();
+      $gene_symbol = $gene->display_xref()->display_id();
     }
 
     # fetch the "select" transcript for this gene
@@ -132,6 +140,8 @@ while (my $slice = shift(@$slices)) {
                        ensg_id => $ensg,
                        ensg_version => $ensg_version,
                        gene_name => $gene_name,
+                       gene_symbol => $gene_symbol,
+                       gene_accession => $gene_accession,
                        chromosome => $chromosome,
                        region_accession => $region_accession,
                        deleted => 0,
