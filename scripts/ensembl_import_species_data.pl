@@ -149,6 +149,7 @@ while (my $slice = shift(@$slices)) {
                        seq_region_end => $gene->seq_region_end(),
                        seq_region_strand => $gene->seq_region_strand(),
                        biotype => $gene->biotype(),
+                       source => $gene->source(),
                        transcripts => ()
     };
 
@@ -195,6 +196,7 @@ while (my $slice = shift(@$slices)) {
                                ccds_id => $ccds,
                                uniparc_accession => $uniparc,
                                biotype => $transcript->biotype(),
+                               biotype => $transcript->source(),
                                deleted => 0,
                                seq_region_start => $transcript->seq_region_start(),
                                seq_region_end => $transcript->seq_region_end(),
