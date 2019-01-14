@@ -221,6 +221,15 @@ sub pipeline_analyses {
                           cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
                                  ' | awk \'{print $3}\');'.
                                  
+                                 'PGPASSWORD='.$self->o('giftsdb_w_pass').
+                                 ' psql -h '.$self->o('giftsdb_host').
+                                 '      -p '.$self->o('giftsdb_port').
+                                 '      -d '.$self->o('giftsdb_name').
+                                 '      -U '.$self->o('giftsdb_w_user').
+                                 '   -t -c "UPDATE ensembl_species_history '.
+                                 '          SET alignment_status=\'ALIGNMENT_IN_PROGRESS\''.
+                                 '          WHERE ensembl_species_history_id=$ENSEMBLSPECIESHISTORYID";'.
+                                 
                                  'RELEASEMAPPINGHISTORYID='.
                                  '$(PGPASSWORD='.$self->o('giftsdb_r_pass').
                                  ' psql -h '.$self->o('giftsdb_host').
@@ -354,7 +363,7 @@ sub pipeline_analyses {
                           step => 100,
         },
         -flow_into => { '2->A' => [ 'blast_cigar_alignments' ],
-                        'A->1' => [ 'dummy' ]}
+                        'A->1' => [ 'set_alignment_completed' ]}
       },
 
       {
@@ -393,12 +402,27 @@ sub pipeline_analyses {
       },
 
       {
-        -logic_name => 'dummy',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        -parameters => {},
-        -rc_name       => 'default',
-        -can_be_empty  => 1,
-      },      
+        -logic_name => 'set_alignment_completed',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+        -parameters => {
+                          use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                          use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
+                          cmd =>
+                                 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
+                                 ' | awk \'{print $3}\');'.
+                          
+                                 'PGPASSWORD='.$self->o('giftsdb_w_pass').
+                                 ' psql -h '.$self->o('giftsdb_host').
+                                 '      -p '.$self->o('giftsdb_port').
+                                 '      -d '.$self->o('giftsdb_name').
+                                 '      -U '.$self->o('giftsdb_w_user').
+                                 '   -t -c "UPDATE ensembl_species_history '.
+                                 '          SET alignment_status=\'ALIGNMENT_COMPLETED\''.
+                                 '          WHERE ensembl_species_history_id=$ENSEMBLSPECIESHISTORYID";'
+                       },
+        -rc_name    => 'default',
+        -max_retry_count => 0,
+      },   
       
     ];
   }
