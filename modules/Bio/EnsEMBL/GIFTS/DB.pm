@@ -236,10 +236,12 @@ sub fetch_transcript_ids {
 sub store_alignment {
   my ($dbc,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
 
-  my $sql_select_arun = "SELECT * FROM alignment_run WHERE alignment_run_id=?";
+  my $sql_select_arun = "SELECT score1_type FROM alignment_run WHERE alignment_run_id=?";
   my $sth_arun = $dbc->prepare($sql_select_arun);
   $sth_arun->bind_param(1,$alignment_run_id,SQL_INTEGER);
   $sth_arun->execute();
+  my ($score1_type) = $sth_arun->fetchrow_array();
+  $sth_arun->finish();
 
   my $sql_alignment_add =
     "INSERT INTO alignment (alignment_run_id,uniprot_id,transcript_id,mapping_id,score1,score2,report) VALUES (?,?,?,?,?,?,?)";
@@ -254,6 +256,18 @@ sub store_alignment {
   $sth->bind_param(7,$report);
   $sth->execute() or die "Could not add the alignment:\n".$dbc->errstr;
   $sth->finish();
+  
+  if ($score1_type eq 'perfect_match' and $score1 == 1) {
+    my $sql_mapping_update =
+    "UPDATE mapping SET alignment_difference=0 WHERE mapping_id=? AND uniprot_id=? AND transcript_id=?";
+
+    my $sth_map = $dbc->prepare($sql_mapping_update);
+    $sth_map->bind_param(1,$mapping_id);
+    $sth_map->bind_param(2,$uniprot_id);
+    $sth_map->bind_param(3,$transcript_id);
+    $sth_map->execute() or die "Could not update the alignment_difference to 0 in the mapping table for a perfect match alignment:\n".$dbc->errstr;
+    $sth_map->finish();
+  }
 }
 
 sub store_pdb_ens {
