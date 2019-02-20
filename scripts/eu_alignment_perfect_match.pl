@@ -78,6 +78,7 @@ my $pipeline_name = "perfect match compare";
 my $pipeline_comment;
 my $pipeline_invocation = join " ",$0,@ARGV;
 my $release_mapping_history_id;
+my $mapping_id_only;
 
 GetOptions(
         'output_dir=s' => \$output_dir,
@@ -101,6 +102,7 @@ GetOptions(
         'uniprot_tr_dir=s' => \$uniprot_tr_dir,
         'pipeline_name=s' => \$pipeline_name,
         'pipeline_comment=s' => \$pipeline_comment,
+        'mapping_id_only=i' => \$mapping_id_only,
    );
 
 if (!$giftsdb_name or !$giftsdb_schema or !$giftsdb_host or !$giftsdb_user or !$giftsdb_pass or !$giftsdb_port) {
@@ -221,6 +223,11 @@ print("Alignment run $alignment_run_id\n");
 while(my @row = $sth_gifts_mapped->fetchrow_array) {
   my $mapping_id = $row[0];
   my $uniprot_id = $row[1];
+
+  if ($mapping_id_only and $mapping_id_only != $mapping_id) {
+    next;
+  }
+
   my $gifts_transcript_id = $row[2];
   my $mapping_type = $row[3];
 
