@@ -71,6 +71,7 @@ my $pipeline_name = "perfect match compare";
 my $pipeline_comment;
 my $pipeline_invocation = join " ",$0,@ARGV;
 my $release_mapping_history_id;
+my $mapping_id_only;
 
 GetOptions(
         'output_dir=s' => \$output_dir,
@@ -88,6 +89,7 @@ GetOptions(
         'uniprot_tr_dir=s' => \$uniprot_tr_dir,
         'pipeline_name=s' => \$pipeline_name,
         'pipeline_comment=s' => \$pipeline_comment,
+        'mapping_id_only=i' => \$mapping_id_only,
    );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -190,6 +192,11 @@ my @mappings = rest_get("/mapping/history/".$release_mapping_history_id);
 foreach my $mapping (@mappings) { 
   my $mapping_id = $mapping->{'mapping_id'};
   my $uniprot_id = $mapping->{'uniprot_id'};
+
+  if ($mapping_id_only and $mapping_id_only != $mapping_id) {
+    next;
+  }
+
   my $gifts_transcript_id = $mapping->{'transcript_id'};
   my $mapping_type = $mapping->{'sp_ensembl_mapping_type'};
 
