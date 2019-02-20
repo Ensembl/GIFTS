@@ -44,6 +44,7 @@ use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Mapper;
 use Data::Dumper;
+use Bio::EnsEMBL::GIFTS::DB qw(rest_post);
 
 #options that the user can set
 my $species = 'homo_sapiens';
