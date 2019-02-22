@@ -56,6 +56,8 @@ my $registry_user;
 my $registry_pass;
 my $registry_port;
 
+my $rest_server;
+
 GetOptions(
         'user=s' => \$user,
         'species=s' => \$species,
@@ -64,6 +66,7 @@ GetOptions(
         'registry_user=s' => \$registry_user,
         'registry_pass=s' => \$registry_pass,
         'registry_port=s' => \$registry_port,
+        'rest_server=s' => \$rest_server,
 );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -72,6 +75,10 @@ if (!$registry_host or !$registry_user or !$registry_port) {
 
 if (!$release) {
   die "Please specify a release with --release\n";
+}
+
+if (!$rest_server) {
+  die "Please specify a rest server URL with --rest_server\n";
 }
 
 print "Fetching $species,e$release\n";
@@ -220,7 +227,7 @@ while (my $slice = shift(@$slices)) {
     push($json_gene,@json_genes);
     $gene_count++;
   }
-  rest_post("/ensembl/load/".$species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
+  rest_post($rest_server."/ensembl/load/".$species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
 }
 
 # display counts
