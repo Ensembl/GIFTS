@@ -91,23 +91,21 @@ sub rest_get {
 # send a post request to the GIFTS REST server
 sub rest_post {
   my ($endpoint,$content_hash_ref) = @_;
-  
-  my $server = "";
-  
+
   my $http = HTTP::Tiny->new();
-  my $response = $http->post($server.$endpoint,{headers => { 'Content-type' => 'application/json',
+  my $response = $http->post($endpoint,{headers => { 'Content-type' => 'application/json',
                                                              'Accept' => 'application/json' },
                                                 content => encode_json($content_hash_ref)});
-  
+
   if (!($response->{'success'})) {
-    die("REST server POST failed at endpoint: ".$server.$endpoint."\n");
+    die("REST server POST failed at endpoint: ".$endpoint."\n");
   }
   
   if (length($response->{'content'}) > 0) {
     # return reference to hash containing data in json format
     return (decode_json($response->{'content'}));
   } else {
-    die("REST server POST response length is 0. Failed at endpoint: ".$server.$endpoint."\n");
+    die("REST server POST response length is 0. Failed at endpoint: ".$endpoint."\n");
   }
 }
 
