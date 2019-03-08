@@ -43,8 +43,8 @@ use Pod::Usage;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Mapper;
-use Data::Dumper;
 use Bio::EnsEMBL::GIFTS::DB qw(rest_post);
+use URI::Escape;
 
 #options that the user can set
 my $species = 'homo_sapiens';
@@ -99,7 +99,10 @@ my $slice_adaptor = $registry->get_adaptor($species,'core','Slice');
 my $slices = $slice_adaptor->fetch_all('toplevel',undef,1);
 my $meta_adaptor = $registry->get_adaptor($species,'core','MetaContainer');
 my $ca = $registry->get_adaptor($species,'core','CoordSystem');
+
 my $species_name = $meta_adaptor->get_scientific_name();
+my $escaped_species_name = uri_escape($species_name); # to replace space with %20
+
 my $tax_id = $meta_adaptor->get_taxonomy_id();
 my $assembly_name = $ca->fetch_all()->[0]->version();
 
@@ -108,7 +111,10 @@ my $transcript_count = 0;
 
 my $chromosome = "";
 my $region_accession;
+
+my @json_genes = ();
 while (my $slice = shift(@$slices)) {
+
   # Fetch additional meta data on the slice
   $region_accession = $slice->seq_region_name();
   if ($slice->is_chromosome()) {
@@ -117,8 +123,7 @@ while (my $slice = shift(@$slices)) {
       $region_accession = $slice->get_all_synonyms('INSDC')->[0]->name();
     }
   }
-  
-  my @json_genes = ();
+
   my $genes = $slice->get_all_Genes();
 
   while (my $gene = shift(@$genes)) {
@@ -135,11 +140,13 @@ while (my $slice = shift(@$slices)) {
     my $gene_symbol = "";
     my $gene_accession = "";
 
-    if ($gene->description() =~ /(.+)\[.+Acc:(.+)\]/) {
-      $gene_name = $1;
-      $gene_accession = $2;
+    if ($gene->description()) {
+      if ($gene->description() =~ /(.+)\[.+Acc:(.+)\]/) {
+        $gene_name = $1;
+        $gene_accession = $2;
+      }
     }
-
+    
     if ($gene->display_xref()) {
       $gene_symbol = $gene->display_xref()->display_id();
     }
@@ -158,11 +165,20 @@ while (my $slice = shift(@$slices)) {
                        seq_region_strand => $gene->seq_region_strand(),
                        biotype => $gene->biotype(),
                        source => $gene->source(),
-                       transcripts => ()
+                       #transcripts => ()
     };
 
+    foreach my $key (keys %$json_gene) {
+      if ($key eq 'deleted') {
+        next;     
+      }
+      if (!($json_gene->{$key})) {
+        delete($json_gene->{$key});
+      }
+    }
+
     foreach my $transcript (@{$gene->get_all_Transcripts}) {
-     
+  
       my ($enst,$enst_version) = split(/\./,$transcript->stable_id_version());
 
       my $ensp = "";
@@ -221,13 +237,25 @@ while (my $slice = shift(@$slices)) {
                                userstamp => $user,
                                select => $is_select_transcript
       };
-      push($json_transcript,@{$json_gene->{'transcripts'}});
+      
+      foreach my $key (keys %$json_transcript) {
+        if ($key eq 'deleted') {
+          next;     
+        }
+        if (!($json_transcript->{$key})) {
+          delete($json_transcript->{$key});
+        }
+      }
+      push(@{$json_gene->{'transcripts'}},$json_transcript);
       $transcript_count++;
     }
-    push($json_gene,@json_genes);
+    push(@json_genes,$json_gene);
     $gene_count++;
   }
-  rest_post($rest_server."/ensembl/load/".$species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
+}
+
+if (scalar(@json_genes)) {
+  rest_post($rest_server."/ensembl/load/".$escaped_species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
 }
 
 # display counts
