@@ -1,36 +1,116 @@
 #!/bin/bash
 
+PATH_TO_UNIPROT_KNOWLEDGEBASE=$1;
+OUTPUT_DIR=$2
+
 # fetch the data files and unzip
-cp /path/to/uniprot/knowledgebase/uniprot_sprot_varsplic.fasta.gz .
-cp /path/to/uniprot/knowledgebase/uniprot_trembl.fasta.gz .
-cp /path/to/uniprot/knowledgebase/uniprot_sprot.fasta.gz .
+
+if [ ! -f $PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_sprot_varsplic.fasta.gz ]; then
+  >&2 echo "$PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_sprot_varsplic.fasta.gz does not exist.";
+  exit -1;
+fi
+
+if [ ! -f $PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_trembl.fasta.gz ]; then
+  >&2 echo "$PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_trembl.fasta.gz does not exist.";
+  exit -1;
+fi
+
+if [ ! -f $PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_sprot.fasta.gz ]; then
+  >&2 echo "$PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_sprot.fasta.gz does not exist.";
+  exit -1;
+fi
+
+cp $PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_sprot_varsplic.fasta.gz $OUTPUT_DIR/
+cp $PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_trembl.fasta.gz $OUTPUT_DIR/
+cp $PATH_TO_UNIPROT_KNOWLEDGEBASE/uniprot_sprot.fasta.gz $OUTPUT_DIR/
+
+if [ ! -f $OUTPUT_DIR/uniprot_sprot_varsplic.fasta.gz ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sprot_varsplic.fasta.gz has not been copied successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_trembl.fasta.gz ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_trembl.fasta.gz has not been copied successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_sprot.fasta.gz ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sprot.fasta.gz has not been copied successfully.";
+  exit -1;
+fi
+
 echo Files Copied
 
-cat /path/to/uniprot/knowledgebase/reldate.txt
+gunzip $OUTPUT_DIR/uniprot_sprot_varsplic.fasta.gz
+gunzip $OUTPUT_DIR/uniprot_trembl.fasta.gz
+gunzip $OUTPUT_DIR/uniprot_sprot.fasta.gz
 
-gunzip uniprot_sprot_varsplic.fasta.gz
-gunzip uniprot_trembl.fasta.gz
-gunzip uniprot_sprot.fasta.gz
-echo Files Unzipped
+if [ ! -f $OUTPUT_DIR/uniprot_sprot_varsplic.fasta ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sprot_varsplic.fasta.gz has not been unzipped successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_trembl.fasta ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_trembl.fasta.gz has not been unzipped successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_sprot.fasta ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sprot.fasta.gz has not been unzipped successfully.";
+  exit -1;
+fi
+
+echo Files unzipped
 
 # clean the headers
-awk -F "|" '/^>/ { print ">"$2; next } 1' uniprot_sprot.fasta > uniprot_sp.cleaned.fa
-awk -F "|" '/^>/ { print ">"$2; next } 1' uniprot_sprot_varsplic.fasta > uniprot_sp_isoforms.cleaned.fa
-awk -F "|" '/^>/ { print ">"$2; next } 1' uniprot_trembl.fasta > uniprot_tr.cleaned.fa
+awk -F "|" '/^>/ { print ">"$2; next } 1' $OUTPUT_DIR/uniprot_sprot.fasta > $OUTPUT_DIR/uniprot_sp.cleaned.fa
+awk -F "|" '/^>/ { print ">"$2; next } 1' $OUTPUT_DIR/uniprot_sprot_varsplic.fasta > $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa
+awk -F "|" '/^>/ { print ">"$2; next } 1' $OUTPUT_DIR/uniprot_trembl.fasta > $OUTPUT_DIR/uniprot_tr.cleaned.fa
+
+if [ ! -f $OUTPUT_DIR/uniprot_sp.cleaned.fa ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sprot_varsplic.fasta has not been cleaned successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_trembl.fasta has not been cleaned successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_tr.cleaned.fa ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sprot.fasta has not been cleaned successfully.";
+  exit -1;
+fi
+
 echo Headers cleaned
 
 # compress into block GZIP format, though for trembl we compress and chunk.
-bgzip uniprot_sp.cleaned.fa
-bgzip uniprot_sp_isoforms.cleaned.fa
+bgzip $OUTPUT_DIR/uniprot_sp.cleaned.fa
+bgzip $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa
+
+if [ ! -f $OUTPUT_DIR/uniprot_sp.cleaned.fa.gz ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sp.cleaned.fa has not been compressed successfully.";
+  exit -1;
+fi
+
+if [ ! -f $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz ]; then
+  >&2 echo "$OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa has not been compressed successfully.";
+  exit -1;
+fi
+
 echo Swissprot files compressed
 
-mkdir trembl20
-fastasplit --fasta uniprot_tr.cleaned.fa -c 20 --output trembl20
+mkdir $OUTPUT_DIR/trembl20
+fastasplit --fasta $OUTPUT_DIR/uniprot_tr.cleaned.fa -c 20 --output $OUTPUT_DIR/trembl20
 
 # bgzip the chunks
-cd trembl20
+cd $OUTPUT_DIR/trembl20
 for i in $( ls ); do
     bgzip $i
+    if [ ! -f $i.gz ]; then
+      >&2 echo "$OUTPUT_DIR/trembl20/$i has not been compressed successfully.";
+      exit -1;
+    fi
 done
 cd ..
 
