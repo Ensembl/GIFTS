@@ -73,6 +73,8 @@ my $pipeline_invocation = join " ",$0,@ARGV;
 my $release_mapping_history_id;
 my $mapping_id_only;
 
+my $rest_server;
+
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
@@ -90,6 +92,7 @@ GetOptions(
         'pipeline_name=s' => \$pipeline_name,
         'pipeline_comment=s' => \$pipeline_comment,
         'mapping_id_only=i' => \$mapping_id_only,
+        'rest_server=s' => \$rest_server
    );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -102,6 +105,10 @@ if (!$user) {
 
 if (!$release) {
   die("Please specify release with --release flag");
+}
+
+if (!$rest_server) {
+  die "Please specify a rest server URL with --rest_server\n";
 }
 
 if (!$release_mapping_history_id) {
@@ -172,7 +179,8 @@ my $alignment_run = {
                          pipeline_comment => $pipeline_comment,
                          pipeline_script => "GIFTS/scripts/eu_alignment_perfect_match.pl",
                          userstamp => $user,
-                         release_mapping_history_id => $release_mapping_history_id,
+                         #release_mapping_history_id => $release_mapping_history_id,
+                         release_mapping_history => $release_mapping_history_id,
                          logfile_dir => $output_dir,
                          uniprot_file_swissprot => $uniprot_sp_file,
                          uniprot_file_isoform => $uniprot_sp_isoform_file,
@@ -181,67 +189,74 @@ my $alignment_run = {
                          report => "sp mapping value"
 };
 
-my $alignment_run_id = rest_post("/alignments/alignment_run/",$alignment_run);
+my $alignment_run_response_ = rest_post($rest_server."/alignments/alignment_run/",$alignment_run);
+my $alignment_run_id = $alignment_run_response_->{'alignment_run_id'};
 print("Alignment run $alignment_run_id\n");
 
 # The main loop
 
-# fetch the items we want to update
-my @mappings = rest_get("/mapping/history/".$release_mapping_history_id);
+my $next_url = $rest_server."/mappings/release_history/".$release_mapping_history_id;
+my $mappings;
+while ($next_url) {
+  
+  print STDERR "Fetching the mappings from $next_url ...\n";
+  $mappings = rest_get($next_url);
+  print STDERR scalar(@{$mappings->{'results'}})." mappings fetched out of ".$mappings->{'count'}.".\n";
 
-foreach my $mapping (@mappings) { 
-  my $mapping_id = $mapping->{'mapping_id'};
-  my $uniprot_id = $mapping->{'uniprot_id'};
+  foreach my $mapping (@{$mappings->{'results'}}) {
 
-  if ($mapping_id_only and $mapping_id_only != $mapping_id) {
-    next;
-  }
+    my $mapping_id = $mapping->{'mapping_id'};
+    my $uniprot_id = $mapping->{'uniprot'};
 
-  my $gifts_transcript_id = $mapping->{'transcript_id'};
-  my $mapping_type = $mapping->{'sp_ensembl_mapping_type'};
+    if ($mapping_id_only and $mapping_id_only != $mapping_id) {
+      next;
+    }
+    my $gifts_transcript_id = $mapping->{'transcript'};
 
-  my $score1 = 0;
-  my $score2 = 0;
+#FIX THIS WHEN ENDPOINT IS FIXED
+    #my $mapping_type = $mapping->{'sp_ensembl_mapping_type'};
+    my $mapping_type = "XREF:ONE2ONE:MGI";
 
-  # can we use existing UniParc information stored to make a storage call
-  my $is_uniparc_match = is_perfect_eu_match_uniparcs($uniprot_id,$gifts_transcript_id);
-  if ($is_uniparc_match) {
-    $score1 = 1;
-  }
+    my $score1 = 0;
+    my $score2 = 0;
+    # can we use existing UniParc information stored to make a storage call
+    my $is_uniparc_match = is_perfect_eu_match_uniparcs($rest_server,$uniprot_id,$gifts_transcript_id);
+    if ($is_uniparc_match) {
+      $score1 = 1;
+    }
+    if ($mapping_type) {
+      if ($mapping_type =~ /ONE2ONE/) {
+        $score2 = 1;
+      }
+    }
+    else {
+      $mapping_type = "";
+    }
 
-  if ($mapping_type) {
-    if ($mapping_type =~ /ONE2ONE/) {
-      $score2 = 1;
+    # do we have sequences for both items
+    # get the uniprot accession,sequence version,sequence
+    my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) = fetch_uniprot_info_for_id($rest_server,$uniprot_id,@uniprot_archive_parsers);
+    # Get the Ensembl transcript ID and translated sequence
+    my $enst_id = fetch_transcript_enst($rest_server,$gifts_transcript_id);
+    my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
+    my $translation_seq = undef;
+    if ($transcript) {
+      if ($transcript->translate) {
+        my $translation = $transcript->translate();
+        $translation_seq = $translation->seq();
+      }
+    } else {
+      print("Transcript $enst_id could not be fetched.\n");
+    }
+    # store the result if sequences are found or if a UniParc match was made
+    if ($translation_seq && $uniprot_seq) {
+      store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
+    }
+    elsif ($score1==1) {
+      store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
     }
   }
-  else {
-    $mapping_type = "";
-  }
-
-  # do we have sequences for both items
-
-  # get the uniprot accession,sequence version,sequence
-  my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) =
-    fetch_uniprot_info_for_id($uniprot_id,@uniprot_archive_parsers);
-
-  # Get the Ensembl transcript ID and translated sequence
-  my $enst_id = fetch_transcript_enst($gifts_transcript_id);
-  my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
-  my $translation_seq = undef;
-  if ($transcript->translate) {
-    my $translation = $transcript->translate();
-    $translation_seq = $translation->seq();
-  }
-
-  # store the result if sequences are found or if a UniParc match was made
-  if ($translation_seq && $uniprot_seq) {
-    store_alignment($alignment_run_id,
-               $uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
-  }
-  elsif ($score1==1) {
-    store_alignment($alignment_run_id,
-               $uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
-  }
+  $next_url = $mappings->{'next'};
 }
 CLOSE:
 close UNIPROT_SEQS;
