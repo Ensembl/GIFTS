@@ -78,6 +78,8 @@ my $alignment_run_id = 0;
 
 my $cigar_id_count=0;
 
+my $rest_server;
+
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
@@ -93,7 +95,8 @@ GetOptions(
         'write_cigar=i' => \$write_cigar,
         'write_blast=i' => \$write_blast,
         'mapping_id=s' => \$mapping_id,
-        'alignment_run_id=i' => \$alignment_run_id
+        'alignment_run_id=i' => \$alignment_run_id,
+        'rest_server=s' => \$rest_server
    );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -102,6 +105,10 @@ if (!$registry_host or !$registry_user or !$registry_port) {
 
 if (!$user) {
   die("Please specify user with --user flag");
+}
+
+if (!$rest_server) {
+  die "Please specify a rest server URL with --rest_server\n";
 }
 
 if (!$species) {
@@ -141,7 +148,7 @@ my $useq_file = $output_dir."/uniprot_seq_".$first_mapping_id.".fa";
 # mapping history run
 # ensembl release
 
-my $alignment_run = rest_get("/alignments/alignment_run/".$perfect_match_alignment_run_id);
+my $alignment_run = rest_get($rest_server."/alignments/alignment_run/".$perfect_match_alignment_run_id);
 
 my $release_mapping_history_id = $alignment_run->{'release_mapping_history_id'};
 my $release = $alignment_run->{'ensembl_release'};
@@ -205,7 +212,7 @@ foreach my $u (@uniprot_archives) {
 print "Opened uniprot archives\n";
 
 # fetch the items we want to update
-my @alignments = rest_get("/alignments/align_run/".$perfect_match_alignment_run_id); # check real name for endpoint to fetch alignments by alignment run id
+my @alignments = rest_get($rest_server."/alignments/alignment/align_run/".$perfect_match_alignment_run_id);
 
 # Add the alignment run into the database
 if ($write_blast) {
@@ -216,7 +223,8 @@ if ($write_blast) {
                          pipeline_comment => $pipeline_comment,
                          pipeline_script => "GIFTS/scripts/eu_alignment_blast_cigar.pl",
                          userstamp => $user,
-                         release_mapping_history_id => $release_mapping_history_id,
+                         #release_mapping_history_id => $release_mapping_history_id,
+                         release_mapping_history => $release_mapping_history_id,
                          logfile_dir => $output_dir,
                          uniprot_file_swissprot => $uniprot_sp_file,
                          uniprot_file_isoform => $uniprot_sp_isoform_file,
@@ -224,7 +232,7 @@ if ($write_blast) {
                          ensembl_release => $release,
   };
 
-  my $alignment_run_id = rest_post("/alignments/alignment_run/",$alignment_run);
+  my $alignment_run_id = rest_post($rest_server."/alignments/alignment_run/",$alignment_run);
   print("Alignment run $alignment_run_id\n");
 }
 
@@ -273,10 +281,10 @@ ALIGNMENT: foreach my $alignment (@alignments) {
 
   # get the uniprot accession,sequence version,sequence
   my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) =
-    fetch_uniprot_info_for_id($uniprot_id,@uniprot_archive_parsers);
+    fetch_uniprot_info_for_id($rest_server,$uniprot_id,@uniprot_archive_parsers);
 
   # Get the Ensembl transcript ID and translated sequence
-  my $enst_id = fetch_transcript_enst($gifts_transcript_id);
+  my $enst_id = fetch_transcript_enst($rest_server,$gifts_transcript_id);
   print(DEBUG_INFO "transcript id=$gifts_transcript_id enst_id=$enst_id\n");
   my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
 
@@ -318,7 +326,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
 
       if ($r) {
         my $coverage = ($r->length) / length($translation->seq);
-        store_alignment($alignment_run_id,
+        store_alignment($rest_server,$alignment_run_id,
                      $uniprot_id,$gifts_transcript_id,$mapping_id,$r->percent_id,$coverage,undef);
         #$alignment_id = $dbc->last_insert_id(undef,undef,"alignment","alignment_id");
       }
@@ -334,7 +342,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
     }
     if ($write_cigar) {
       # check for an existing entry in the cigar table
-      my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($alignment_id);
+      my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($rest_server,$alignment_id);
       if (!$existing_cigar) {
         # run muscle
         my ($seqobj_compu,$seqobj_compe) = run_muscle($target_u,$translation,$output_dir);
@@ -342,7 +350,7 @@ ALIGNMENT: foreach my $alignment (@alignments) {
         # store the results
         my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
         my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
-        store_cigarmdz($alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
+        store_cigarmdz($rest_server,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
         $cigar_id_count++;
       }
     }
