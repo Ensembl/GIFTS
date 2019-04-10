@@ -111,26 +111,27 @@ sub rest_post {
 
 # Use the UniParc identifier as a comparison tool
 sub is_perfect_eu_match_uniparcs {
-  my ($uniprot_id,$transcript_id) = @_;
+  my ($rest_server,$uniprot_id,$transcript_id) = @_;
 
-  my $uniprot_entry = rest_get("/uniprot/entry/".$uniprot_id);
-  my $transcript = rest_get("/ensembl/transcript/".$transcript_id);
+  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id);
+  my $transcript = rest_get($rest_server."/ensembl/transcript/".$transcript_id);
 
   return $uniprot_entry->{'upi'} eq $transcript->{'uniparc_accession'};
 }
 
 sub fetch_uniprot_info_for_id {
-  my ($uniprot_id,@uniprot_archive_parsers) = @_;
+  my ($rest_server,$uniprot_id,@uniprot_archive_parsers) = @_;
 
   my $uniprot_seq = undef;
-  my ($uniprot_true_acc,$uniprot_seq_version) = fetch_true_uniprot_accession($uniprot_id);
+  my ($uniprot_true_acc,$uniprot_seq_version) = fetch_true_uniprot_accession($rest_server,$uniprot_id);
   foreach my $ui (@uniprot_archive_parsers) {
     if ($ui->has_sequence($uniprot_true_acc)) {
       $uniprot_seq = $ui->get_sequence_no_length($uniprot_true_acc);
       return($uniprot_seq,$uniprot_true_acc,$uniprot_seq_version);
     }
   }
-  my ($uniprot_acc,$uniprot_seq_version2) = fetch_uniprot_accession($uniprot_id);
+
+  my ($uniprot_acc,$uniprot_seq_version2) = fetch_uniprot_accession($rest_server,$uniprot_id);
   if ($uniprot_acc ne $uniprot_true_acc) {
     foreach my $ui (@uniprot_archive_parsers) {
       if ($ui->has_sequence($uniprot_acc)) {
@@ -143,9 +144,9 @@ sub fetch_uniprot_info_for_id {
 }
 
 sub fetch_uniprot_accession {
-  my $uniprot_id = shift;
+  my ($rest_server,$uniprot_id) = @_;
 
-  my $uniprot_entry = rest_get("/uniprot/entry/".$uniprot_id);
+  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id);
   my $uniprot_acc = $uniprot_entry->{'uniprot_acc'};
   my $sequence_version = $uniprot_entry->{'sequence_version'};
 
@@ -161,9 +162,9 @@ sub fetch_uniprot_accession {
 }
 
 sub fetch_true_uniprot_accession {
-  my $uniprot_id = shift;
+  my ($rest_server,$uniprot_id) = @_;
   
-  my $uniprot_entry = rest_get("/uniprot/entry/".$uniprot_id);
+  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id);
   my $uniprot_acc = $uniprot_entry->{'uniprot_acc'};
   my $sequence_version = $uniprot_entry->{'sequence_version'};
 
@@ -171,38 +172,38 @@ sub fetch_true_uniprot_accession {
 }
 
 sub fetch_transcript_enst {
-  my $gifts_transcript_id = shift;
+  my ($rest_server,$gifts_transcript_id) = @_;
   
-  my $transcript = rest_get("/ensembl/transcript/".$gifts_transcript_id);
+  my $transcript = rest_get($rest_server."/ensembl/transcript/".$gifts_transcript_id);
 
   return $transcript->{'enst_id'};
 }
 
 sub store_alignment {
-  my ($dbc,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
+  my ($rest_server,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
 
   my $alignment = {
-                     alignment_run_id => $alignment_run_id,
+                     alignment_run => $alignment_run_id,
                      uniprot_id => $uniprot_id,
-                     transcript_id => $transcript_id,
-                     mapping_id => $mapping_id,
+                     transcript => $transcript_id,
+                     mapping => $mapping_id,
                      score1 => $score1,
                      score2 => $score2,
                      report => $report
   };
-  rest_post("/alignments/alignment/",$alignment);
+  rest_post($rest_server."/alignments/alignment/",$alignment);
 }
 
 sub store_cigarmdz {
-  my ($alignment_id,$cigar_plus_string,$md_string) = @_;
+  my ($rest_server,$alignment_id,$cigar_plus_string,$md_string) = @_;
   #my ($dbc,$alignment_id,$cigar_plus_string,$md_string) = @_;
 
   my $cigar = {
-                 alignment_id => $alignment_id,
+                 alignment => $alignment_id,
                  cigarplus => $cigar_plus_string,
                  mdz => $md_string
   };
-  rest_post("/ensembl/cigar/",$cigar);
+  rest_post($rest_server."/ensembl/cigar/",$cigar);
   
   # update the "alignment_difference" column in the "mapping" table
   # alignment_difference is the sum of I, D and X in the cigarplus string
@@ -216,12 +217,14 @@ sub store_cigarmdz {
   }
 
   my $alignment = rest_get("/alignments/alignment/".$alignment_id);
+  my $old_mapping = rest_get($rest_server."/mapping/",$alignment->{'mapping'});
   my $mapping = {
+                   mapping_id => $old_mapping->{'mapping'}->{'mappingId'},
                    uniprot_id => $alignment->{'uniprot_id'},
-                   transcript_id => $alignment->{'transcript_id'},
+                   transcript_id => $alignment->{'transcript'},
                    alignment_difference => $alignment_difference,
   };
-  rest_post("/mapping/",$mapping); # new endpoint syntax pending
+#  rest_post($rest_server."/mapping/",$mapping); # new endpoint syntax pending
 
   # if no endpoint available, uncomment the following and restore $dbc parameters
   #my $sql_mapping_update = "UPDATE mapping SET alignment_difference=? WHERE uniprot_id=? AND transcript_id=?"; 
@@ -234,9 +237,9 @@ sub store_cigarmdz {
 }
 
 sub fetch_cigarmdz {
-  my ($alignment_id) = @_;
+  my ($rest_server,$alignment_id) = @_;
 
-  my $cigar = rest_get("/ensembl/cigar/".$alignment_id);
+  my $cigar = rest_get($rest_server."/ensembl/cigar/".$alignment_id);
   my $cigar_plus_string = $cigar->{'cigarplus'};
   my $md_string = $cigar->{'mdz'};
 
@@ -260,14 +263,14 @@ sub fetch_latest_uniprot_enst_perfect_matches {
 # and the corresponding Ensembl transcript stable IDs as an array of values for a given
 # species name (ie 'Homo sapiens') and assembly accession (ie 'GRCh38').
 
-  my $assembly = shift;
+  my ($rest_server,$assembly) = @_;
 
-  my $latest_alignments = rest_get("/alignments/alignment/latest/assembly/".$assembly."?alignment_type=perfect_match");
+  my $latest_alignments = rest_get($rest_server."/alignments/alignment/latest/assembly/".$assembly."?alignment_type=perfect_match");
   
   my %perfect_matches;
   foreach my $alignment (@{$latest_alignments}) { # hash to array here?
-    my $uniprot_acc = fetch_true_uniprot_accession($alignment->{'uniprot_id'});
-    my $enst_id = fetch_transcript_enst($alignment->{'transcript_id'});
+    my $uniprot_acc = fetch_true_uniprot_accession($rest_server,$alignment->{'uniprot_id'});
+    my $enst_id = fetch_transcript_enst($rest_server,$alignment->{'transcript'});
     push(@{$perfect_matches{$uniprot_acc}},$enst_id);
   }
 
