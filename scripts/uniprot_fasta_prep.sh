@@ -98,6 +98,25 @@ if [ ! -f $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz ]; then
   exit -1;
 fi
 
+# delete the fasta index files (if any from a previous run)
+rm $OUTPUT_DIR/uniprot_sp.cleaned.fa.gz.fai $OUTPUT_DIR/uniprot_sp.cleaned.fa.gz.gzi $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz.fai $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz.gzi
+if [ -f $OUTPUT_DIR/uniprot_sp.cleaned.fa.gz.fai ]; then
+      >&2 echo "$OUTPUT_DIR/uniprot_sp.cleaned.fa.gz.fai has not been deleted successfully.";
+      exit -1;
+fi
+if [ -f $OUTPUT_DIR/uniprot_sp.cleaned.fa.gz.gzi ]; then
+      >&2 echo "$OUTPUT_DIR/uniprot_sp.cleaned.fa.gz.gzi has not been deleted successfully.";
+      exit -1;
+fi
+if [ -f $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz.fai ]; then
+      >&2 echo "$OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz.fai has not been deleted successfully.";
+      exit -1;
+fi
+if [ -f $OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz.gzi ]; then
+      >&2 echo "$OUTPUT_DIR/uniprot_sp_isoforms.cleaned.fa.gz.gzi has not been deleted successfully.";
+      exit -1;
+fi
+
 echo Swissprot files compressed
 
 mkdir $OUTPUT_DIR/trembl20
@@ -111,7 +130,24 @@ for i in $( ls ); do
       >&2 echo "$OUTPUT_DIR/trembl20/$i has not been compressed successfully.";
       exit -1;
     fi
+
+    # delete the fasta index files (if any from a previous run)
+    rm $i.gz.fai $i.gz.gzi;
+    if [ -f $i.gz.fai ]; then
+      >&2 echo "$OUTPUT_DIR/trembl20/$i.gz.fai has not been deleted successfully.";
+      exit -1;
+    fi
+    if [ -f $i.gz.gzi ]; then
+      >&2 echo "$OUTPUT_DIR/trembl20/$i.gz.gzi has not been deleted successfully.";
+      exit -1;
+    fi
 done
 cd ..
+
+# delete the fasta index files (if any from a previous run)
+rm $OUTPUT_DIR/*.*i
+rm $OUTPUT_DIR/trembl20/*.*i
+
+
 
 echo trembl files split and compressed
