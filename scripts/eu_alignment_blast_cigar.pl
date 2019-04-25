@@ -284,7 +284,7 @@ ALIGNMENT: foreach my $alignment (@{$alignments->{'results'}}) {
 
     my $uniprot_id = $alignment->{'uniprot_id'};
     my $gifts_transcript_id = $alignment->{'transcript'};
-    my $alignment_id = 0;
+    my $alignment_id = $alignment->{'alignment_id'};
 
     print(DEBUG_INFO "PROCESSING alignment_mapping_id:$alignment_mapping_id,uniprot_id:$uniprot_id,gifts_transcript_id:$gifts_transcript_id\n");
 
