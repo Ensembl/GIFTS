@@ -75,6 +75,9 @@ my $mapping_id_only;
 
 my $rest_server;
 
+my $alignment_run_id = 0;
+my $page = 0;
+
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
@@ -92,7 +95,9 @@ GetOptions(
         'pipeline_name=s' => \$pipeline_name,
         'pipeline_comment=s' => \$pipeline_comment,
         'mapping_id_only=i' => \$mapping_id_only,
-        'rest_server=s' => \$rest_server
+        'rest_server=s' => \$rest_server,
+        'alignment_run_id=i' => \$alignment_run_id, # optional alignment_run_id to use for the alignments (it must be an existing one) 
+        'page=s' => \$page
    );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -119,12 +124,18 @@ if (!$pipeline_comment) {
   $pipeline_comment = "perfect match compare for $species $release";
 }
 
+# remove trailing comma and duplicate commas if any
+$page =~ s/,$//;
+$page =~ s/,,/,/;
+
+my ($first_page) = $page =~ /(\d+)/;
+
 #
 # Process options for the output files
 #
 mkdir($output_dir) unless(-d $output_dir);
-my $output_file_noseqs = $output_dir."/".$output_prefix."-no_seqs.txt";
-my $output_file_seqs = $output_dir."/".$output_prefix."-_seqs.txt";
+my $output_file_noseqs = $output_dir."/".$output_prefix.$first_page."-no_seqs.txt";
+my $output_file_seqs = $output_dir."/".$output_prefix.$first_page."-_seqs.txt";
 open UNIPROT_NOSEQS,">".$output_file_noseqs or die print "Can't open output no sequence file ".$output_file_noseqs."\n";
 open UNIPROT_SEQS,">".$output_file_seqs or die print "Can't open output sequence match file ".$output_file_noseqs."\n";
 
@@ -171,31 +182,38 @@ $registry->load_registry_from_db(
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
 print("Database adaptors opened\n");
 
-# Add the alignment run into the database
-my $alignment_run = {
-                         score1_type => "perfect_match",
-                         score2_type => "sp mapping ONE2ONE",
-                         pipeline_name => $pipeline_name,
-                         pipeline_comment => $pipeline_comment,
-                         pipeline_script => "GIFTS/scripts/eu_alignment_perfect_match.pl",
-                         userstamp => $user,
-                         #release_mapping_history_id => $release_mapping_history_id,
-                         release_mapping_history => $release_mapping_history_id,
-                         logfile_dir => $output_dir,
-                         uniprot_file_swissprot => $uniprot_sp_file,
-                         uniprot_file_isoform => $uniprot_sp_isoform_file,
-                         uniprot_dir_trembl => $uniprot_tr_dir,
-                         ensembl_release => $release,
-                         report => "sp mapping value"
-};
+## Add the alignment run into the database
+#my $alignment_run = {
+#                         score1_type => "perfect_match",
+#                         score2_type => "sp mapping ONE2ONE",
+#                         pipeline_name => $pipeline_name,
+#                         pipeline_comment => $pipeline_comment,
+#                         pipeline_script => "GIFTS/scripts/eu_alignment_perfect_match.pl",
+#                         userstamp => $user,
+#                         #release_mapping_history_id => $release_mapping_history_id,
+#                         release_mapping_history => $release_mapping_history_id,
+#                         logfile_dir => $output_dir,
+#                         uniprot_file_swissprot => $uniprot_sp_file,
+#                         uniprot_file_isoform => $uniprot_sp_isoform_file,
+#                         uniprot_dir_trembl => $uniprot_tr_dir,
+#                         ensembl_release => $release,
+#                         report => "sp mapping value"
+#};
 
-my $alignment_run_response_ = rest_post($rest_server."/alignments/alignment_run/",$alignment_run);
-my $alignment_run_id = $alignment_run_response_->{'alignment_run_id'};
+#my $alignment_run_response_ = rest_post($rest_server."/alignments/alignment_run/",$alignment_run);
+#my $alignment_run_id = $alignment_run_response_->{'alignment_run_id'};
 print("Alignment run $alignment_run_id\n");
 
 # The main loop
 
-my $next_url = $rest_server."/mappings/release_history/".$release_mapping_history_id;
+my @page_array = split(/,/,$page);
+
+my $next_url = $rest_server."/mappings/release_history/".$release_mapping_history_id."/?";
+if ($page) {
+  my $first_page = shift(@page_array);
+  $next_url .= "page=".$first_page;
+}
+
 my $mappings;
 while ($next_url) {
   
@@ -213,9 +231,13 @@ while ($next_url) {
     }
     my $gifts_transcript_id = $mapping->{'transcript'};
 
-#FIX THIS WHEN ENDPOINT IS FIXED
-    #my $mapping_type = $mapping->{'sp_ensembl_mapping_type'};
-    my $mapping_type = "XREF:ONE2ONE:MGI";
+    my $mapping_type;
+    foreach my $mapping_history_entry (@{$mapping->{'mapping_history'}}) {
+      if ($mapping_history_entry->{'release_mapping_history'} == $release_mapping_history_id) {
+        $mapping_type = $mapping_history_entry->{'sp_ensembl_mapping_type'};
+        last;
+      }
+    }
 
     my $score1 = 0;
     my $score2 = 0;
@@ -256,7 +278,18 @@ while ($next_url) {
       store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
     }
   }
-  $next_url = $mappings->{'next'};
+  
+  if ($page) {
+    $next_url = $rest_server."/mappings/release_history/".$release_mapping_history_id."/?";
+    if (scalar(@page_array) > 0) {
+      my $next_page = shift(@page_array);
+      $next_url .= "page=".$next_page;
+    } else {
+      $next_url = undef;
+    }
+  } else {
+    $next_url = $mappings->{'next'};
+  }
 }
 CLOSE:
 close UNIPROT_SEQS;
