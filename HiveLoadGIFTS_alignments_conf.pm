@@ -260,7 +260,7 @@ sub pipeline_analyses {
                           'done',
 
                           column_names => ['page'],
-                          #step => 100,
+                          step => 200,
         },
         -flow_into => { '2->A' => [ 'perfect_match_alignments' ],
                         'A->1' => [ 'insert_alignment_run_id_for_blast' ]}
@@ -278,7 +278,7 @@ sub pipeline_analyses {
                                  $self->o('latest_release_mapping_history_url').'#assembly#/'.
                                  ' | jq -r ".release_mapping_history_id");'.
                                  
-                                 'ALIGNMENTRUNID=$(head -n1 #perfect_alignment_run_id_output_file# | awk \'{print $1}\');'.
+                                 'PERFECTMATCHALIGNMENTRUNID=$(head -n1 #perfect_alignment_run_id_output_file# | awk \'{print $1}\');'.
                                  
                                  'perl '.$self->o('perfect_match_script').
                                  ' -output_dir #output_dir#'.
@@ -295,13 +295,13 @@ sub pipeline_analyses {
                                  ' -pipeline_name '.$self->o('pipeline_name').
                                  ' -pipeline_comment "'.$self->o('pipeline_comment_perfect_match').'"'.
                                  ' -rest_server '.$self->o('rest_server').
-                                 ' -alignment_run_id $ALIGNMENTRUNID'.
-                                 ' -page #page# '
-                                 #' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
+                                 ' -alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
+                                 ' -page "#expr(join(",",@{#_range_list#}))expr#"'
                        },
-        -rc_name    => 'default_30GB',
-        #-rc_name    => 'default',
+        -rc_name    => 'default_35GB',
+
         -max_retry_count => 0,
+        -analysis_capacity => 50,
       },
 
       {
