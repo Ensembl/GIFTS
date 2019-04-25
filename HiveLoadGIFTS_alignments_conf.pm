@@ -262,6 +262,7 @@ sub pipeline_analyses {
                           column_names => ['page'],
                           step => 200,
         },
+        -max_retry_count => 0,
         -flow_into => { '2->A' => [ 'perfect_match_alignments' ],
                         'A->1' => [ 'insert_alignment_run_id_for_blast' ]}
       },
@@ -430,8 +431,7 @@ sub resource_classes {
     my $self = shift;
     return {
       'default' => { LSF => '-M1900 -R"select[mem>1900] rusage[mem=1900]"' },
-      'default_20GB' => { LSF => '-M20000 -R"select[mem>20000] rusage[mem=20000]"' },
-      'default_30GB' => { LSF => '-M30000 -R"select[mem>30000] rusage[mem=30000]"' },
+      'default_35GB' => { LSF => '-M35000 -R"select[mem>35000] rusage[mem=35000]"' },
     }
   }
 
