@@ -215,7 +215,8 @@ sub pipeline_analyses {
                                  $self->o('latest_release_mapping_history_url').'#assembly#/'.
                                  ' | jq -r ".release_mapping_history_id");'.
 
-                                 'wget -O - -o /dev/null --post-data="$(jq -n -r --arg rmh "$RELEASEMAPPINGHISTORYID" \'{ '.
+                                 'PERFECTMATCHALIGNMENTRUNID='.
+                                 '$(wget -O - -o /dev/null --post-data="$(jq -n -r --arg rmh "$RELEASEMAPPINGHISTORYID" \'{ '.
                                    'score1_type: "perfect_match", '.
                                    'score2_type: "sp mapping ONE2ONE", '.
                                    'pipeline_name: "'.$self->o('pipeline_name').'", '.
@@ -229,9 +230,9 @@ sub pipeline_analyses {
                                    'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
                                    'ensembl_release: '.$self->o('release').' }\')'.
                                  '" --header=Content-Type:application/json '.$self->o('alignment_run_url').
-                                 ' | jq -r \'.alignment_run_id\''. # wget should return a json containing the alignment_run_id created
+                                 ' | jq -r \'.alignment_run_id\');'. # wget should return a json containing the alignment_run_id created
                                  
-                                 ' > #perfect_alignment_run_id_output_file#'
+                                 'echo $PERFECTMATCHALIGNMENTRUNID > #perfect_alignment_run_id_output_file#'
                        },
         -rc_name    => 'default',
         -max_retry_count => 0,
