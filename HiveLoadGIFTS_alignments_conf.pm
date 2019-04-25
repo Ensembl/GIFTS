@@ -374,13 +374,13 @@ sub pipeline_analyses {
                           use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
                           use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                           cmd =>
-                                 'PERFECTMATCHALIGNMENTRUNID=$(grep "Alignment run" #perfect_match_alignments_output_file#'.
-                                 ' | awk \'{print $3}\');'.
+                                 'PERFECTMATCHALIGNMENTRUNID=$(head -n1 #perfect_alignment_run_id_output_file# | awk \'{print $1}\');'.
 
                                  'ALIGNMENTRUNID=$(head -n1 #blast_alignment_run_id_output_file# | awk \'{print $1}\');'.
 
                                  'perl '.$self->o('blast_cigar_script').
                                  ' -user '.$self->o('userstamp').
+                                 ' -species #species#'.
                                  ' -perfect_match_alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
                                  ' -registry_host '.$self->o('registry_host').
                                  ' -registry_user '.$self->o('registry_user').
@@ -392,9 +392,9 @@ sub pipeline_analyses {
                                  ' -alignment_run_id $ALIGNMENTRUNID'.
                                  ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
                        },
-        -rc_name    => 'default_30GB',
+        -rc_name    => 'default_35GB',
         -max_retry_count => 0,
-        -analysis_capacity => 50,
+        -analysis_capacity => 40,
       },
       
       {
