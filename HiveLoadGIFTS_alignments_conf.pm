@@ -56,7 +56,7 @@ sub default_options {
 'latest_release_mapping_history_url' => $self->o('rest_server').'mappings/release_history/latest/assembly/',
 'mappings_by_release_mapping_history_url' => $self->o('rest_server').'/mappings/release_history/',
 'alignment_run_url' => $self->o('rest_server').'alignments/alignment_run/',
-'latest_alignments_url' => $self->o('rest_server').'alignments/alignment/latest/assembly/',
+'alignments_by_alignment_run_url' => $self->o('rest_server').'alignments/alignment/alignment_run/',
 
 'release' => 95, # ensembl release corresponding to the Ensembl gene set in GIFTS to be used
 
@@ -345,14 +345,15 @@ sub pipeline_analyses {
         -parameters => {
                           inputcmd =>
 
+                          'PERFECTMATCHALIGNMENTRUNID=$(head -n1 #perfect_alignment_run_id_output_file# | awk \'{print $1}\');'.
                           'NUMALIGNMENTS=$(wget -O - -o /dev/null '.
-                          $self->o('latest_alignments_url').'#assembly#/?page=$PAGENUM'. # alignment_type parameter by default is "perfect_match"
-                            ' | jq -r ".count")'.
-                          
+                          $self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID'. # alignment_type parameter by default is "perfect_match"
+                            ' | jq -r ".count");'.
+
                           'for PAGENUM in $(seq 1 $(((NUMALIGNMENTS+9)/10)));'. # (NUMALIGNMENTS+9/10 is the number of pages of 10 elements returned by the REST API 
                           'do '.
-                            '$(wget -O - -o /dev/null '.
-                          $self->o('latest_alignments_url').'#assembly#/?page=$PAGENUM'. # alignment_type parameter by default is "perfect_match"
+                            'wget -O - -o /dev/null '.
+                          $self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID/?page=$PAGENUM'.
                             ' | jq -r ".results[] | select(.score1 == 0)"'.
                             ' | jq -r ".mapping";'.
                           'done',
