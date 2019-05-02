@@ -198,7 +198,7 @@ sub pipeline_analyses {
                                  ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
                                  ' -uniprot_tr_dir #uniprot_tr_dir#'
                        },
-        -rc_name    => 'default_30GB',
+        -rc_name    => 'default_35GB',
         -max_retry_count => 0,
         -flow_into => { 1 => ['insert_alignment_run_id_for_perfect'] },
       },
@@ -403,7 +403,13 @@ sub pipeline_analyses {
         -parameters => {
                           use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
                           use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
-                          cmd =>  'echo "DONE"'
+                          cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #import_species_data_output_file#'.
+                                 ' | awk \'{print $3}\');'.
+
+                                 'wget -O- --post-data="" '.
+                                 '--header=Content-Type:application/json '.
+                                 $self->o('set_alignment_status_url').
+                                 '$ENSEMBLSPECIESHISTORYID/alignment_status/ALIGNMENT_COMPLETED/ '
                        },
         -rc_name    => 'default',
         -max_retry_count => 0,
