@@ -211,27 +211,8 @@ foreach my $u (@uniprot_archives) {
 }
 print "Opened uniprot archives\n";
 
-# Add the alignment run into the database
-if ($write_blast) {
-#  my $alignment_run = {
-#                         score1_type => "identity",
-#                         score2_type => "coverage",
-#                         pipeline_name => $pipeline_name,
-#                         pipeline_comment => $pipeline_comment,
-#                         pipeline_script => "GIFTS/scripts/eu_alignment_blast_cigar.pl",
-#                         userstamp => $user,
-#                         #release_mapping_history_id => $release_mapping_history_id,
-#                         release_mapping_history => $release_mapping_history_id,
-#                         logfile_dir => $output_dir,
-#                         uniprot_file_swissprot => $uniprot_sp_file,
-#                         uniprot_file_isoform => $uniprot_sp_isoform_file,
-#                         uniprot_dir_trembl => $uniprot_tr_dir,
-#                         ensembl_release => $release,
-#  };
-
-#  my $alignment_run_id = rest_post($rest_server."/alignments/alignment_run/",$alignment_run);
-  print("Alignment run $alignment_run_id\n");
-}
+# Print the alignment run
+print("Alignment run $alignment_run_id\n");
 
 # Objects to support the blast call
 my $bplitewrapper = Bio::EnsEMBL::Analysis::Tools::BPliteWrapper-> new
@@ -334,9 +315,7 @@ ALIGNMENT: foreach my $alignment (@{$alignments->{'results'}}) {
 
         if ($r) {
           my $coverage = ($r->length) / length($translation->seq);
-          store_alignment($rest_server,$alignment_run_id,
-                       $uniprot_id,$gifts_transcript_id,$alignment_mapping_id,$r->percent_id,$coverage,undef);
-          #$alignment_id = $dbc->last_insert_id(undef,undef,"alignment","alignment_id");
+          $alignment_id = store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$alignment_mapping_id,$r->percent_id,$coverage,undef);
         }
         else {
           print UNIPROT_NOSEQS "ERROR: NO BLASTP RESULTS PARSED\n";
@@ -352,6 +331,7 @@ ALIGNMENT: foreach my $alignment (@{$alignments->{'results'}}) {
         # check for an existing entry in the cigar table
         my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($rest_server,$alignment_id);
         if (!$existing_cigar) {
+
           # run muscle
           my ($seqobj_compu,$seqobj_compe) = run_muscle($target_u,$translation,$output_dir);
 
