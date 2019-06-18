@@ -113,7 +113,9 @@ my $chromosome = "";
 my $region_accession;
 
 my @json_genes = ();
-while (my $slice = shift(@$slices)) {
+
+#while (my $slice = shift(@$slices)) {
+while (my $slice = shift(@$slices) and $gene_count < 5) {
 
   # Fetch additional meta data on the slice
   $region_accession = $slice->seq_region_name();
@@ -126,7 +128,8 @@ while (my $slice = shift(@$slices)) {
 
   my $genes = $slice->get_all_Genes();
 
-  while (my $gene = shift(@$genes)) {
+#  while (my $gene = shift(@$genes)) {
+  while (my $gene = shift(@$genes) and $gene_count < 5) {
 
     my ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
     
@@ -255,7 +258,16 @@ while (my $slice = shift(@$slices)) {
 }
 
 if (scalar(@json_genes)) {
-  rest_post($rest_server."/ensembl/load/".$escaped_species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
+  my $initial_load_response = rest_post($rest_server."/ensembl/load/".$escaped_species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
+  my $task_id = $initial_load_response->{'task_id'};
+  my $load_response = $initial_load_response;
+  while (($load_response->{'status'} ne 'SUCCESS') or ($load_response->{'status'} ne 'FAILURE')) {
+    $load_response = rest_get($rest_server."/job/".$task_id);
+    sleep(60);
+  }
+  if ($load_response->{'status'} eq 'FAILURE') {
+    die("REST API server returned FAILURE while loading the Ensembl genes.");
+  }
 }
 
 # display counts
