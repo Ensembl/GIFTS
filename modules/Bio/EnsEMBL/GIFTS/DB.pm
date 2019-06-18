@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-# Copyright [2017-2018] EMBL-European Bioinformatics Institute
+# Copyright [2017-2019] EMBL-European Bioinformatics Institute
 #
 # Licensed under the Apache License,Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ $VERSION     = 1.00;
                   fetch_uniprot_info_for_id
                   store_alignment
                   fetch_transcript_enst
-                  get_gifts_dbc
                   fetch_cigarmdz
                   store_cigarmdz
                   is_perfect_eu_match_uniparcs
@@ -75,8 +74,8 @@ sub rest_get {
   
   my $http = HTTP::Tiny->new();
   my $response = $http->get($server.$endpoint,{headers => { 'Content-type' => 'application/json' }});
-  
-  if (!($response->{'success'})) {
+
+  if (!($response->{'success'} or $response->{'status'} == 404)) { # the endpoints return 404 if something is not found but this is successful
     die("REST server GET failed at endpoint: ".$server.$endpoint."\n");
   }
   
@@ -93,11 +92,25 @@ sub rest_post {
   my ($endpoint,$content_hash_ref) = @_;
 
   my $http = HTTP::Tiny->new();
-  my $response = $http->post($endpoint,{headers => { 'Content-type' => 'application/json',
+  my $response;
+
+  if ($content_hash_ref) {
+    $response = $http->post($endpoint,{headers => { 'Content-type' => 'application/json',
                                                              'Accept' => 'application/json' },
                                                 content => encode_json($content_hash_ref)});
+  } else { # some POST don't require content
+    $response = $http->post($endpoint,{headers => {'Content-type' => 'application/json','Accept' => 'application/json'}});
+  }
+  
+  
 
-  if (!($response->{'success'})) {
+print STDERR "ENCODED IN JSON:\n";
+print STDERR encode_json($content_hash_ref);
+print STDERR "\nRESPONSE:\n";
+use Data::Dumper;
+print STDERR Dumper($response);
+
+  if (!($response->{'success'} or $response->{'task_id'})) {
     die("REST server POST failed at endpoint: ".$endpoint."\n");
   }
   
@@ -191,20 +204,20 @@ sub store_alignment {
                      score2 => $score2,
                      report => $report
   };
-  rest_post($rest_server."/alignments/alignment/",$alignment);
+  my $alignment_response = rest_post($rest_server."/alignments/alignment/",$alignment); 
+  return $alignment_response->{'alignment_id'};
 }
 
 sub store_cigarmdz {
   my ($rest_server,$alignment_id,$cigar_plus_string,$md_string) = @_;
-  #my ($dbc,$alignment_id,$cigar_plus_string,$md_string) = @_;
 
   my $cigar = {
                  alignment => $alignment_id,
                  cigarplus => $cigar_plus_string,
                  mdz => $md_string
   };
-  rest_post($rest_server."/ensembl/cigar/",$cigar);
-  
+  my $cigar_response = rest_post($rest_server."/ensembl/cigar/",$cigar);
+
   # update the "alignment_difference" column in the "mapping" table
   # alignment_difference is the sum of I, D and X in the cigarplus string
   my $alignment_difference = 0;
@@ -216,46 +229,19 @@ sub store_cigarmdz {
     }
   }
 
-  my $alignment = rest_get("/alignments/alignment/".$alignment_id);
-  my $old_mapping = rest_get($rest_server."/mapping/",$alignment->{'mapping'});
-  my $mapping = {
-                   mapping_id => $old_mapping->{'mapping'}->{'mappingId'},
-                   uniprot_id => $alignment->{'uniprot_id'},
-                   transcript_id => $alignment->{'transcript'},
-                   alignment_difference => $alignment_difference,
-  };
-#  rest_post($rest_server."/mapping/",$mapping); # new endpoint syntax pending
-
-  # if no endpoint available, uncomment the following and restore $dbc parameters
-  #my $sql_mapping_update = "UPDATE mapping SET alignment_difference=? WHERE uniprot_id=? AND transcript_id=?"; 
-  #my $sth = $dbc->prepare($sql_mapping_update);
-  #$sth->bind_param(1,$alignment_difference);
-  #$sth->bind_param(2,$uniprot_id);
-  #$sth->bind_param(3,$transcript_id);
-  #$sth->execute() or die "Could not update the mapping alignment difference:\n".$dbc->errstr;
-  #$sth->finish();
+  my $alignment = rest_get($rest_server."/alignments/alignment/".$alignment_id);
+  my $old_mapping = rest_get($rest_server."/mapping/".$alignment->{'mapping'});
+  my $alignment_difference_response = rest_post($rest_server."/mapping/".$old_mapping->{'mapping'}->{'mappingId'}."/alignment_difference/".$alignment_difference."/");
 }
 
 sub fetch_cigarmdz {
   my ($rest_server,$alignment_id) = @_;
 
-  my $cigar = rest_get($rest_server."/ensembl/cigar/".$alignment_id);
+  my $cigar = rest_get($rest_server."/ensembl/cigar/alignment/".$alignment_id);
   my $cigar_plus_string = $cigar->{'cigarplus'};
   my $md_string = $cigar->{'mdz'};
 
   return ($cigar_plus_string,$md_string);
-}
-
-sub get_gifts_dbc {
-  my ($giftsdb_name,$giftsdb_schema,$giftsdb_host,$giftsdb_user,$giftsdb_pass,$giftsdb_port) = @_;
-
-  my $dsn = "dbi:Pg:dbname=".$giftsdb_name.";host=".$giftsdb_host.";port=".$giftsdb_port;
-  my $dbc = DBI->connect($dsn,$giftsdb_user,$giftsdb_pass) or die "Unable to connect to GIFTS DB with $dsn";
-  
-  # PostgreSQL schemas are not supported by DBI but I can set the search_path variable at this point
-  # because we are going to use one db schema only
-  $dbc->do("SET search_path TO ".$giftsdb_schema.", public");
-  return $dbc;
 }
 
 sub fetch_latest_uniprot_enst_perfect_matches {
