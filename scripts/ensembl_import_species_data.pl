@@ -43,7 +43,7 @@ use Pod::Usage;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Mapper;
-use Bio::EnsEMBL::GIFTS::DB qw(rest_post);
+use Bio::EnsEMBL::GIFTS::DB qw(rest_post rest_get);
 use URI::Escape;
 
 #options that the user can set
@@ -114,8 +114,7 @@ my $region_accession;
 
 my @json_genes = ();
 
-#while (my $slice = shift(@$slices)) {
-while (my $slice = shift(@$slices) and $gene_count < 5) {
+while (my $slice = shift(@$slices)) {
 
   # Fetch additional meta data on the slice
   $region_accession = $slice->seq_region_name();
@@ -128,8 +127,7 @@ while (my $slice = shift(@$slices) and $gene_count < 5) {
 
   my $genes = $slice->get_all_Genes();
 
-#  while (my $gene = shift(@$genes)) {
-  while (my $gene = shift(@$genes) and $gene_count < 5) {
+  while (my $gene = shift(@$genes)) {
 
     my ($ensg,$ensg_version) = split(/\./,$gene->stable_id_version());
     
@@ -261,12 +259,14 @@ if (scalar(@json_genes)) {
   my $initial_load_response = rest_post($rest_server."/ensembl/load/".$escaped_species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
   my $task_id = $initial_load_response->{'task_id'};
   my $load_response = $initial_load_response;
-  while (($load_response->{'status'} ne 'SUCCESS') or ($load_response->{'status'} ne 'FAILURE')) {
+  while ($load_response->{'status'} ne 'SUCCESS') {
+
+    if ($load_response->{'status'} eq 'FAILURE') {
+      die("REST API server returned FAILURE while loading the Ensembl genes.");
+    }
+
     $load_response = rest_get($rest_server."/job/".$task_id);
     sleep(60);
-  }
-  if ($load_response->{'status'} eq 'FAILURE') {
-    die("REST API server returned FAILURE while loading the Ensembl genes.");
   }
 }
 
