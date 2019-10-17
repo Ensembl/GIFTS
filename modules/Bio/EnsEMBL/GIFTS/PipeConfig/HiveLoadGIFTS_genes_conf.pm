@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
- HiveLoadGIFTS_genes_conf
+ Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_genes_conf
 
 =head1 DESCRIPTION
 
@@ -32,13 +32,13 @@ limitations under the License.
 
 =cut
 
-package HiveLoadGIFTS_genes_conf;
+package Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_genes_conf;
 
 use warnings;
 use strict;
 use feature 'say';
 
-use base ('HiveLoadGIFTS_conf');
+use base ('Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_conf');
 
 sub default_options {
   my ($self) = @_;

@@ -17,7 +17,7 @@ limitations under the License.
 
 =cut
 
-package HiveLoadGIFTS_conf;
+package Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_conf;
 
 use warnings;
 use strict;

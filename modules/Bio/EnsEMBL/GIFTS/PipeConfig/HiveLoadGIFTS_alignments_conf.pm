@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 NAME
 
- HiveLoadGIFTS_alignments_conf;
+ Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_alignments_conf;
 
 =head1 DESCRIPTION
 
@@ -33,13 +33,13 @@ limitations under the License.
 
 =cut
 
-package HiveLoadGIFTS_alignments_conf;
+package Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_alignments_conf;
 
 use warnings;
 use strict;
 use feature 'say';
 
-use base ('HiveLoadGIFTS_conf');
+use base ('Bio::EnsEMBL::GIFTS::PipeConfig::HiveLoadGIFTS_conf');
 
 sub default_options {
   my ($self) = @_;
