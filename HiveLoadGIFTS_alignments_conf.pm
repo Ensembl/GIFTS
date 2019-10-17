@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
- Export Ensembl genes from core databases.
+ Alignment of Ensembl and UniProt data.
  
  Mandatory parameters without default values:
   -registry_host    mysql server with core databases
