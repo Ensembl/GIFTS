@@ -61,7 +61,7 @@ sub default_options {
     mappings_by_release_mapping_history_url => $self->o('rest_server').'/mappings/release_history/',
     alignment_run_url                       => $self->o('rest_server').'/alignments/alignment_run/',
     alignments_by_alignment_run_url         => $self->o('rest_server').'/alignments/alignment/alignment_run/',
-    set_alignment_status_url                => $self->o('rest_server'),
+    set_alignment_status_url                => $self->o('rest_server').'/ensembl/species_history/',
   };
 }
 
