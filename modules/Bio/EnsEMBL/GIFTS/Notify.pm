@@ -65,7 +65,7 @@ sub set_email_parameters {
     $text    .= "Submission tag: $tag\n";
   }
 
-  $text .= "Output directory: ".$self->param('base_output_dir')."\n";
+  $text .= "Output directory: ".$self->param('base_output_dir')."/".$self->param('release')."\n";
 
   $self->param('subject', $subject);
   $self->param('text', $text);

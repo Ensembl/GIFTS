@@ -65,7 +65,7 @@ sub write_output {
   foreach (@$species_list) {
     my $assembly   = $$_{'assembly'};
     my $species    = $$_{'species'};
-    my $output_dir = $self->param('base_output_dir')."/$species";
+    my $output_dir = $self->param('base_output_dir')."/$release/$species";
 
     my $species_output = {
       assembly   => $assembly,

@@ -93,8 +93,9 @@ sub pipeline_analyses {
                        species_list    => $self->o('species_list'),
                        base_output_dir => $self->o('base_output_dir'),
                        tag             => $self->o('tag'),
-                       timestamp       => $self->o('timestamp'),
                        email           => $self->o('email'),
+                       release         => $self->o('release'),
+                       timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
       -flow_into  => {
