@@ -63,7 +63,7 @@ sub write_output {
     tag             => $tag,
     email           => $email,
     ensembl_release => $ensembl_release,
-    submitted       => $timestamp,
+    submitted       => $submitted,
   );
   $self->dataflow_output_id(\%submission_output, 1);
 
