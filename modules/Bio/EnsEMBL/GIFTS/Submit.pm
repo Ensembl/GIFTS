@@ -56,6 +56,7 @@ sub write_output {
     job_id    => $self->input_job->dbID,
     tag       => $self->param('tag'),
     email     => $self->param('email'),
+    release   => $self->param('release'),
     submitted => $self->param('timestamp'),
   );
   $self->dataflow_output_id(\%submission_output, 1);
@@ -69,6 +70,7 @@ sub write_output {
     my $species_output = {
       assembly   => $assembly,
       species    => $species,
+      release    => $self->param('release'),
       output_dir => $output_dir,
     };
     $self->dataflow_output_id($species_output, 2);

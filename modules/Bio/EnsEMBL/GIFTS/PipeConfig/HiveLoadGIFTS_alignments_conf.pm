@@ -195,7 +195,7 @@ sub pipeline_analyses {
                                  'uniprot_file_swissprot: "#uniprot_sp_file#", '.
                                  'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
                                  'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
-                                 'ensembl_release: '.$self->o('ensembl_release').' }\')'.
+                                 'ensembl_release: #release# }\')'.
                                '" --header=Content-Type:application/json '.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\');'. # wget should return a json containing the alignment_run_id created
                                
@@ -253,7 +253,7 @@ sub pipeline_analyses {
                                ' -registry_port '.$self->o('registry_port').
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
-                               ' -release '.$self->o('ensembl_release').
+                               ' -release #release#'.
                                ' -release_mapping_history_id $RELEASEMAPPINGHISTORYID'.
                                ' -uniprot_sp_file #uniprot_sp_file#'.
                                ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
@@ -292,7 +292,7 @@ sub pipeline_analyses {
                                  'uniprot_file_swissprot: "#uniprot_sp_file#", '.
                                  'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
                                  'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
-                                 'ensembl_release: '.$self->o('ensembl_release').' }\')'.
+                                 'ensembl_release: #release# }\')'.
                                '" --header=Content-Type:application/json '.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\''. # wget should return a json containing the alignment_run_id created
                                

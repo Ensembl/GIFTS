@@ -57,6 +57,7 @@ sub set_email_parameters {
   my $subject = "GIFTS pipeline submission completed";
 
   my $text = "Submitted: ".$self->param('submitted')."\n";
+  $text   .= "Ensembl Release: ".$self->param('release')."\n";
 
   my $tag = $self->param('tag');
   if (defined $tag) {

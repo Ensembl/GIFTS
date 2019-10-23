@@ -94,7 +94,7 @@ sub pipeline_analyses {
                                'perl '.$self->o('import_species_script').
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
-                               ' -release '.$self->o('ensembl_release').
+                               ' -release #release#'.
                                ' -registry_host '.$self->o('registry_host').
                                ' -registry_user '.$self->o('registry_user').
                                ' -registry_port '.$self->o('registry_port').

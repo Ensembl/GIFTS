@@ -48,8 +48,9 @@ sub default_options {
 
     # Parameters to track submissions
     tag       => undef,
-    timestamp => undef,
     email     => undef,
+    release   => undef,
+    timestamp => undef,
 
     # Switch off automatic retries
     hive_default_max_retry_count => 0,
@@ -75,6 +76,7 @@ sub pipeline_create_commands {
       job_id INT PRIMARY KEY,
       tag VARCHAR(255) NULL,
       email VARCHAR(255) NULL,
+      release INT NOT NULL,
       submitted VARCHAR(255) NULL
     );
   /;
