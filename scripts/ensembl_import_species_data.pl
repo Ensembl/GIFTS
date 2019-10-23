@@ -271,6 +271,6 @@ if (scalar(@json_genes)) {
 }
 
 # display counts
-print "Genes:".$gene_count."\n.";
-print "Transcripts:".$transcript_count."\n.";
-print "Finished\n.";
+print "Genes:".$gene_count."\n";
+print "Transcripts:".$transcript_count."\n";
+print "Finished\n";
