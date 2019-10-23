@@ -27,8 +27,7 @@ use strict;
 use warnings;
 use feature 'say';
 
-use JSON;
-use Path::Tiny;
+use File::Spec::Functions qw(catdir);
 use Time::Piece;
 
 use base ('Bio::EnsEMBL::Hive::Process');
@@ -50,35 +49,42 @@ sub write_output {
     $self->param('timestamp', localtime->cdate);
   }
 
+  my $tag             = $self->param('tag');
+  my $email           = $self->param('email');
+  my $ensembl_release = $self->param('ensembl_release');
+  my $submitted       = $self->param('timestamp');
+  my $base_output_dir = $self->param('base_output_dir');
+  my $species_list    = $self->param('species_list');
+
   # A subset of the input parameters are stored in the 'gifts_submission'
   # table, for easier subsequent retrieval than querying the native hive tables.
   my %submission_output = (
-    job_id    => $self->input_job->dbID,
-    tag       => $self->param('tag'),
-    email     => $self->param('email'),
-    release   => $self->param('release'),
-    submitted => $self->param('timestamp'),
+    job_id          => $self->input_job->dbID,
+    tag             => $tag,
+    email           => $email,
+    ensembl_release => $ensembl_release,
+    submitted       => $timestamp,
   );
   $self->dataflow_output_id(\%submission_output, 1);
 
-  my $species_list = $self->param('species_list');
   foreach (@$species_list) {
     my $assembly   = $$_{'assembly'};
     my $species    = $$_{'species'};
-    my $output_dir = $self->param('base_output_dir')."/$release/$species";
+
+    my $output_dir = catdir($base_output_dir, $ensembl_release, $species);
 
     my $species_output = {
-      assembly   => $assembly,
-      species    => $species,
-      release    => $self->param('release'),
-      output_dir => $output_dir,
+      assembly        => $assembly,
+      species         => $species,
+      ensembl_release => $ensembl_release,
+      output_dir      => $output_dir,
     };
     $self->dataflow_output_id($species_output, 2);
   }
 
   my %notify_output = (
     %submission_output,
-    base_output_dir => $self->param('base_output_dir'),
+    base_output_dir => $base_output_dir,
   );
   $self->dataflow_output_id(\%notify_output, 3);
 }

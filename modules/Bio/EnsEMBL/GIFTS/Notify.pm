@@ -27,7 +27,7 @@ use strict;
 use warnings;
 use feature 'say';
 
-use JSON;
+use File::Spec::Functions qw(catdir);
 
 use base ('Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail');
 
@@ -54,18 +54,23 @@ sub write_output {
 sub set_email_parameters {
   my $self = shift;
 
+  my $tag             = $self->param('tag');
+  my $email           = $self->param('email');
+  my $ensembl_release = $self->param('ensembl_release');
+  my $submitted       = $self->param('submitted');
+  my $base_output_dir = $self->param('base_output_dir');
+
   my $subject = "GIFTS pipeline submission completed";
 
-  my $text = "Submitted: ".$self->param('submitted')."\n";
-  $text   .= "Ensembl Release: ".$self->param('release')."\n";
+  my $text = "Submitted: $submitted\n";
+  $text   .= "Ensembl Release: $ensembl_release\n";
 
-  my $tag = $self->param('tag');
   if (defined $tag) {
     $subject .= " ($tag)";
     $text    .= "Submission tag: $tag\n";
   }
 
-  $text .= "Output directory: ".$self->param('base_output_dir')."/".$self->param('release')."\n";
+  $text .= "Output directory: ".catdir($base_output_dir, $ensembl_release)."\n";
 
   $self->param('subject', $subject);
   $self->param('text', $text);

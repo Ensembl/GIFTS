@@ -74,7 +74,7 @@ sub pipeline_analyses {
                        base_output_dir => $self->o('base_output_dir'),
                        tag             => $self->o('tag'),
                        email           => $self->o('email'),
-                       release         => $self->o('release'),
+                       ensembl_release => $self->o('ensembl_release'),
                        timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
@@ -95,7 +95,7 @@ sub pipeline_analyses {
                                'perl '.$self->o('import_species_script').
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
-                               ' -release #release#'.
+                               ' -release #ensembl_release#'.
                                ' -registry_host '.$self->o('registry_host').
                                ' -registry_user '.$self->o('registry_user').
                                ' -registry_port '.$self->o('registry_port').
