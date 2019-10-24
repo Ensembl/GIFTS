@@ -151,8 +151,9 @@ sub pipeline_analyses {
                                  ' | awk \'{print $3}\');'.
                                  'end=$((SECONDS+604800));'.
                                  'while [[ ( $SECONDS -lt $end ) && '.
-                                 '         ( $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ) && '.
-                                 '         ( $STATUS != "MAPPING_COMPLETED" ) ]]; do '.
+                                 '         ( '.
+                                 '           ( $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ) || '.
+                                 '           ( ( $ENSEMBLSPECIESHISTORYID == $ENSEMBLSPECIESHISTORYID_IN_RMH ) && ( $STATUS != "MAPPING_COMPLETED" ) ) ) ]]; do '.
                                  
                                  'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...";'.
                                  'ENSEMBLSPECIESHISTORYID_IN_RMH='.
@@ -166,7 +167,7 @@ sub pipeline_analyses {
                                  ' | jq -r ".status");'.
                                  'sleep 600;'.
                                  'done;'.
-                                 'if [[ $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ]] && '.
+                                 'if [[ $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ]] || '.
                                  '   [[ $STATUS != "MAPPING_COMPLETED" ]]; then exit -1;fi'
                        },
         -rc_name          => 'default',
