@@ -101,14 +101,6 @@ sub rest_post {
   } else { # some POST don't require content
     $response = $http->post($endpoint,{headers => {'Content-type' => 'application/json','Accept' => 'application/json'}});
   }
-  
-  
-
-print STDERR "ENCODED IN JSON:\n";
-print STDERR encode_json($content_hash_ref);
-print STDERR "\nRESPONSE:\n";
-use Data::Dumper;
-print STDERR Dumper($response);
 
   if (!($response->{'success'} or $response->{'task_id'})) {
     die("REST server POST failed at endpoint: ".$endpoint."\n");
