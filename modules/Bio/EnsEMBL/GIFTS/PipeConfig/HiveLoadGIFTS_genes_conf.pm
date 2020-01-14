@@ -75,6 +75,7 @@ sub pipeline_analyses {
                        tag             => $self->o('tag'),
                        email           => $self->o('email'),
                        ensembl_release => $self->o('ensembl_release'),
+                       rest_server     => $self->o('rest_server'),
                        timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
@@ -99,7 +100,7 @@ sub pipeline_analyses {
                                ' -registry_host '.$self->o('registry_host').
                                ' -registry_user '.$self->o('registry_user').
                                ' -registry_port '.$self->o('registry_port').
-                               ' -rest_server '.$self->o('rest_server').
+                               ' -rest_server #rest_server#'.
                                ' > #output_dir#/#import_species_data_file#'
                      },
       -rc_name    => 'default_20GB',

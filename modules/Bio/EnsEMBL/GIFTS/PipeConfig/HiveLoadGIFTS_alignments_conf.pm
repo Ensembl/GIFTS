@@ -57,11 +57,11 @@ sub default_options {
     perfect_match_script         => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pages.pl',
     blast_cigar_script           => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',
 
-    latest_release_mapping_history_url      => $self->o('rest_server').'/mappings/release_history/latest/assembly/',
-    mappings_by_release_mapping_history_url => $self->o('rest_server').'/mappings/release_history/',
-    alignment_run_url                       => $self->o('rest_server').'/alignments/alignment_run/',
-    alignments_by_alignment_run_url         => $self->o('rest_server').'/alignments/alignment/alignment_run/',
-    set_alignment_status_url                => $self->o('rest_server').'/ensembl/species_history/',
+    latest_release_mapping_history_url      => '/mappings/release_history/latest/assembly/',
+    mappings_by_release_mapping_history_url => '/mappings/release_history/',
+    alignment_run_url                       => '/alignments/alignment_run/',
+    alignments_by_alignment_run_url         => '/alignments/alignment/alignment_run/',
+    set_alignment_status_url                => '/ensembl/species_history/',
   };
 }
 
@@ -95,6 +95,7 @@ sub pipeline_analyses {
                        tag             => $self->o('tag'),
                        email           => $self->o('email'),
                        ensembl_release => $self->o('ensembl_release'),
+                       rest_server     => $self->o('rest_server'),
                        timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
@@ -127,12 +128,12 @@ sub pipeline_analyses {
                                'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...";'.
                                'ENSEMBLSPECIESHISTORYID_IN_RMH='.
                                '$(wget -O - -o /dev/null '.
-                               $self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
                                ' | jq -r ".ensembl_species_history.ensembl_species_history_id");'.
 
                                'STATUS='.
                                '$(wget -O - -o /dev/null '.
-                               $self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
                                ' | jq -r ".status");'.
                                'sleep 600;'.
                                'done;'.
@@ -180,7 +181,7 @@ sub pipeline_analyses {
                         cmd =>
                                'RELEASEMAPPINGHISTORYID='.
                                '$(wget -O - -o /dev/null '.
-                               $self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
                                ' | jq -r ".release_mapping_history_id");'.
 
                                'PERFECTMATCHALIGNMENTRUNID='.
@@ -197,7 +198,7 @@ sub pipeline_analyses {
                                  'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
                                  'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
                                  'ensembl_release: #ensembl_release# }\')'.
-                               '" --header=Content-Type:application/json '.$self->o('alignment_run_url').
+                               '" --header=Content-Type:application/json '.'#rest_server#'.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\');'. # wget should return a json containing the alignment_run_id created
                                
                                'echo $PERFECTMATCHALIGNMENTRUNID > #output_dir#/#perfect_alignment_run_id_file#'
@@ -214,11 +215,11 @@ sub pipeline_analyses {
 
                         'RELEASEMAPPINGHISTORYID='.
                                '$(wget -O - -o /dev/null '.
-                               $self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
                                ' | jq -r ".release_mapping_history_id");'.
 
                         'NUMMAPPINGS=$(wget -O - -o /dev/null '.
-                        $self->o('mappings_by_release_mapping_history_url').'$RELEASEMAPPINGHISTORYID'.
+                        '#rest_server#'.$self->o('mappings_by_release_mapping_history_url').'$RELEASEMAPPINGHISTORYID'.
                           ' | jq -r ".count");'.
                         
                         'for PAGENUM in $(seq 1 $(((NUMMAPPINGS+9)/10)));'. # (NUMMAPPINGS+9/10 is the number of pages of 10 elements returned by the REST API 
@@ -242,7 +243,7 @@ sub pipeline_analyses {
                         cmd =>
                                'RELEASEMAPPINGHISTORYID='.
                                '$(wget -O - -o /dev/null '.
-                               $self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
                                ' | jq -r ".release_mapping_history_id");'.
                                
                                'PERFECTMATCHALIGNMENTRUNID=$(head -n1 #output_dir#/#perfect_alignment_run_id_file# | awk \'{print $1}\');'.
@@ -278,7 +279,7 @@ sub pipeline_analyses {
                         cmd =>
                                'RELEASEMAPPINGHISTORYID='.
                                '$(wget -O - -o /dev/null '.
-                               $self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
                                ' | jq -r ".release_mapping_history_id");'.
 
                                'wget -O - -o /dev/null --post-data="$(jq -n -r --arg rmh "$RELEASEMAPPINGHISTORYID" \'{ '.
@@ -294,7 +295,7 @@ sub pipeline_analyses {
                                  'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
                                  'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
                                  'ensembl_release: #ensembl_release# }\')'.
-                               '" --header=Content-Type:application/json '.$self->o('alignment_run_url').
+                               '" --header=Content-Type:application/json '.'#rest_server#'.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\''. # wget should return a json containing the alignment_run_id created
                                
                                ' > #output_dir#/#blast_alignment_run_id_file#'
@@ -312,13 +313,13 @@ sub pipeline_analyses {
 
                         'PERFECTMATCHALIGNMENTRUNID=$(head -n1 #output_dir#/#perfect_alignment_run_id_file# | awk \'{print $1}\');'.
                         'NUMALIGNMENTS=$(wget -O - -o /dev/null '.
-                        $self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID'. # alignment_type parameter by default is "perfect_match"
+                        '#rest_server#'.$self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID'. # alignment_type parameter by default is "perfect_match"
                           ' | jq -r ".count");'.
 
                         'for PAGENUM in $(seq 1 $(((NUMALIGNMENTS+9)/10)));'. # (NUMALIGNMENTS+9/10 is the number of pages of 10 elements returned by the REST API 
                         'do '.
                           'wget -O - -o /dev/null '.
-                        $self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID/?page=$PAGENUM'.
+                        '#rest_server#'.$self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID/?page=$PAGENUM'.
                           ' | jq -r ".results[] | select(.score1 == 0)"'.
                           ' | jq -r ".mapping";'.
                         'done',
@@ -370,7 +371,7 @@ sub pipeline_analyses {
 
                                'wget -O- --post-data="" '.
                                '--header=Content-Type:application/json '.
-                               $self->o('set_alignment_status_url').
+                               '#rest_server#'.$self->o('set_alignment_status_url').
                                '$ENSEMBLSPECIESHISTORYID/alignment_status/ALIGNMENT_COMPLETED/ '
                      },
       -rc_name    => 'default',

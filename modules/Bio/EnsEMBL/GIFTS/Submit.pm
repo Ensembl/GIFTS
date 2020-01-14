@@ -52,6 +52,7 @@ sub write_output {
   my $tag             = $self->param('tag');
   my $email           = $self->param('email');
   my $ensembl_release = $self->param('ensembl_release');
+  my $rest_server     = $self->param('rest_server');
   my $submitted       = $self->param('timestamp');
   my $base_output_dir = $self->param('base_output_dir');
   my $species_list    = $self->param('species_list');
@@ -63,6 +64,7 @@ sub write_output {
     tag             => $tag,
     email           => $email,
     ensembl_release => $ensembl_release,
+    rest_server     => $rest_server,
     submitted       => $submitted,
   );
   $self->dataflow_output_id(\%submission_output, 1);
@@ -77,6 +79,7 @@ sub write_output {
       assembly        => $assembly,
       species         => $species,
       ensembl_release => $ensembl_release,
+      rest_server     => $rest_server,
       output_dir      => $output_dir,
     };
     $self->dataflow_output_id($species_output, 2);
