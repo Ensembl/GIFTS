@@ -50,6 +50,7 @@ sub default_options {
     tag             => undef,
     email           => undef,
     ensembl_release => undef,
+    rest_server     => undef,
     timestamp       => undef,
 
     # Switch off automatic retries

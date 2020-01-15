@@ -28,7 +28,6 @@ limitations under the License.
   -registry_port    mysql port number
   -registry_user    read-only user
   -uniprot_dir      path to UniProt fasta files
-  -rest_server      GIFTS REST API server URL
   -base_output_dir  Location of output files
 
 =cut

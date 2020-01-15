@@ -27,7 +27,6 @@ limitations under the License.
   -registry_host    mysql server with core databases
   -registry_port    mysql port number
   -registry_user    read-only user
-  -rest_server      GIFTS REST API server URL
   -base_output_dir  Location of output files
 
 =cut

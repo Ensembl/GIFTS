@@ -50,12 +50,12 @@ sub write_output {
   }
 
   my $tag             = $self->param('tag');
-  my $email           = $self->param('email');
-  my $ensembl_release = $self->param('ensembl_release');
-  my $rest_server     = $self->param('rest_server');
-  my $submitted       = $self->param('timestamp');
-  my $base_output_dir = $self->param('base_output_dir');
-  my $species_list    = $self->param('species_list');
+  my $email           = $self->param_required('email');
+  my $ensembl_release = $self->param_required('ensembl_release');
+  my $rest_server     = $self->param_required('rest_server');
+  my $submitted       = $self->param_required('timestamp');
+  my $base_output_dir = $self->param_required('base_output_dir');
+  my $species_list    = $self->param_required('species_list');
 
   # A subset of the input parameters are stored in the 'gifts_submission'
   # table, for easier subsequent retrieval than querying the native hive tables.
