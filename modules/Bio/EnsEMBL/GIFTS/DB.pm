@@ -89,17 +89,20 @@ sub rest_get {
 
 # send a post request to the GIFTS REST server
 sub rest_post {
-  my ($endpoint,$content_hash_ref) = @_;
+  my ($auth_token,$endpoint,$content_hash_ref) = @_;
 
   my $http = HTTP::Tiny->new();
   my $response;
 
   if ($content_hash_ref) {
-    $response = $http->post($endpoint,{headers => { 'Content-type' => 'application/json',
-                                                             'Accept' => 'application/json' },
+    $response = $http->post($endpoint,{headers => { 'Authorization' => 'Bearer '.$auth_token,
+                                                    'Content-type' => 'application/json',
+                                                    'Accept' => 'application/json' },
                                                 content => encode_json($content_hash_ref)});
   } else { # some POST don't require content
-    $response = $http->post($endpoint,{headers => {'Content-type' => 'application/json','Accept' => 'application/json'}});
+    $response = $http->post($endpoint,{headers => {'Authorization' => 'Bearer '.$auth_token,
+                                                   'Content-type' => 'application/json',
+                                                   'Accept' => 'application/json'}});
   }
 
   if (!($response->{'success'} or $response->{'task_id'})) {
