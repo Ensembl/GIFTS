@@ -79,6 +79,7 @@ my $alignment_run_id = 0;
 my $cigar_id_count=0;
 
 my $rest_server;
+my $auth_token;
 
 GetOptions(
         'output_dir=s' => \$output_dir,
@@ -96,7 +97,8 @@ GetOptions(
         'write_blast=i' => \$write_blast,
         'mapping_id=s' => \$mapping_id,
         'alignment_run_id=i' => \$alignment_run_id,
-        'rest_server=s' => \$rest_server
+        'rest_server=s' => \$rest_server,
+	'auth_token=s' => \$auth_token
    );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -109,6 +111,10 @@ if (!$user) {
 
 if (!$rest_server) {
   die "Please specify a rest server URL with --rest_server\n";
+}
+
+if (!$auth_token) {
+  die "Please specify an authorization token for the rest server with --auth_token\n";
 }
 
 if (!$species) {
@@ -315,7 +321,7 @@ ALIGNMENT: foreach my $alignment (@{$alignments->{'results'}}) {
 
         if ($r) {
           my $coverage = ($r->length) / length($translation->seq);
-          $alignment_id = store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$alignment_mapping_id,$r->percent_id,$coverage,undef);
+          $alignment_id = store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$alignment_mapping_id,$r->percent_id,$coverage,undef);
         }
         else {
           print UNIPROT_NOSEQS "ERROR: NO BLASTP RESULTS PARSED\n";
@@ -338,7 +344,7 @@ ALIGNMENT: foreach my $alignment (@{$alignments->{'results'}}) {
           # store the results
           my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
           my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
-          store_cigarmdz($rest_server,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
+          store_cigarmdz($auth_token,$rest_server,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
           $cigar_id_count++;
         }
       }
