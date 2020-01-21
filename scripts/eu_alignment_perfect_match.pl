@@ -74,6 +74,7 @@ my $release_mapping_history_id;
 my $mapping_id_only;
 
 my $rest_server;
+my $auth_token;
 
 my $alignment_run_id = 0;
 my $page = 0;
@@ -96,6 +97,7 @@ GetOptions(
         'pipeline_comment=s' => \$pipeline_comment,
         'mapping_id_only=i' => \$mapping_id_only,
         'rest_server=s' => \$rest_server,
+        'auth_token=s' => \$auth_token,
         'alignment_run_id=i' => \$alignment_run_id, # optional alignment_run_id to use for the alignments (it must be an existing one) 
         'page=s' => \$page
    );
@@ -114,6 +116,10 @@ if (!$release) {
 
 if (!$rest_server) {
   die "Please specify a rest server URL with --rest_server\n";
+}
+
+if (!$auth_token) {
+  die "Please specify an authorization token for the rest server with --auth_token\n";
 }
 
 if (!$release_mapping_history_id) {
@@ -272,10 +278,10 @@ while ($next_url) {
     }
     # store the result if sequences are found or if a UniParc match was made
     if ($translation_seq && $uniprot_seq) {
-      store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
+      store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
     }
     elsif ($score1==1) {
-      store_alignment($rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
+      store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
     }
   }
   
