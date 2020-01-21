@@ -57,6 +57,7 @@ my $registry_pass;
 my $registry_port;
 
 my $rest_server;
+my $auth_token;
 
 GetOptions(
         'user=s' => \$user,
@@ -67,6 +68,7 @@ GetOptions(
         'registry_pass=s' => \$registry_pass,
         'registry_port=s' => \$registry_port,
         'rest_server=s' => \$rest_server,
+        'auth_token=s' => \$auth_token,
 );
 
 if (!$registry_host or !$registry_user or !$registry_port) {
@@ -79,6 +81,10 @@ if (!$release) {
 
 if (!$rest_server) {
   die "Please specify a rest server URL with --rest_server\n";
+}
+
+if (!$auth_token) {
+  die "Please specify an authorization token for the rest server with --auth_token\n";
 }
 
 print "Fetching $species,e$release\n";
@@ -256,7 +262,7 @@ while (my $slice = shift(@$slices)) {
 }
 
 if (scalar(@json_genes)) {
-  my $initial_load_response = rest_post($rest_server."/ensembl/load/".$escaped_species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
+  my $initial_load_response = rest_post($auth_token,$rest_server."/ensembl/load/".$escaped_species_name."/".$assembly_name."/".$tax_id."/".$release."/",\@json_genes);
   my $task_id = $initial_load_response->{'task_id'};
   my $load_response = $initial_load_response;
   while ($load_response->{'status'} ne 'SUCCESS') {
