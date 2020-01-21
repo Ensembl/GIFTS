@@ -188,7 +188,7 @@ sub fetch_transcript_enst {
 }
 
 sub store_alignment {
-  my ($rest_server,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
+  my ($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$transcript_id,$mapping_id,$score1,$score2,$report) = @_;
 
   my $alignment = {
                      alignment_run => $alignment_run_id,
@@ -199,19 +199,19 @@ sub store_alignment {
                      score2 => $score2,
                      report => $report
   };
-  my $alignment_response = rest_post($rest_server."/alignments/alignment/",$alignment); 
+  my $alignment_response = rest_post($auth_token,$rest_server."/alignments/alignment/",$alignment); 
   return $alignment_response->{'alignment_id'};
 }
 
 sub store_cigarmdz {
-  my ($rest_server,$alignment_id,$cigar_plus_string,$md_string) = @_;
+  my ($auth_token,$rest_server,$alignment_id,$cigar_plus_string,$md_string) = @_;
 
   my $cigar = {
                  alignment => $alignment_id,
                  cigarplus => $cigar_plus_string,
                  mdz => $md_string
   };
-  my $cigar_response = rest_post($rest_server."/ensembl/cigar/",$cigar);
+  my $cigar_response = rest_post($auth_token,$rest_server."/ensembl/cigar/",$cigar);
 
   # update the "alignment_difference" column in the "mapping" table
   # alignment_difference is the sum of I, D and X in the cigarplus string
@@ -226,7 +226,7 @@ sub store_cigarmdz {
 
   my $alignment = rest_get($rest_server."/alignments/alignment/".$alignment_id);
   my $old_mapping = rest_get($rest_server."/mapping/".$alignment->{'mapping'});
-  my $alignment_difference_response = rest_post($rest_server."/mapping/".$old_mapping->{'mapping'}->{'mappingId'}."/alignment_difference/".$alignment_difference."/");
+  my $alignment_difference_response = rest_post($auth_token,$rest_server."/mapping/".$old_mapping->{'mapping'}->{'mappingId'}."/alignment_difference/".$alignment_difference."/");
 }
 
 sub fetch_cigarmdz {
