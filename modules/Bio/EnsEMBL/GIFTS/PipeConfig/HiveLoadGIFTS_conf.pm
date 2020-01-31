@@ -52,6 +52,7 @@ sub default_options {
     email           => undef,
     ensembl_release => undef,
     rest_server     => undef,
+    auth_token      => undef,
     timestamp       => undef,
 
     # Switch off automatic retries
