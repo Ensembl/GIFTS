@@ -31,7 +31,8 @@ sub default_options {
     %{$self->SUPER::default_options},
 
     # Username to be registered as the one loading the Ensembl data
-    userstamp => 'ensembl_gifts_loading_pipeline',
+    # Must not exceed 15 characters in length
+    userstamp => 'gifts_pipeline',
 
     # In order to seed the database multiple times, we need the
     # species list here, rather than specified via 'input_id'.
@@ -51,6 +52,7 @@ sub default_options {
     email           => undef,
     ensembl_release => undef,
     rest_server     => undef,
+    auth_token      => undef,
     timestamp       => undef,
 
     # Switch off automatic retries

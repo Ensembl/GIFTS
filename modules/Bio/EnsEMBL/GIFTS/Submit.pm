@@ -53,6 +53,7 @@ sub write_output {
   my $email           = $self->param_required('email');
   my $ensembl_release = $self->param_required('ensembl_release');
   my $rest_server     = $self->param_required('rest_server');
+  my $auth_token      = $self->param_required('auth_token');
   my $submitted       = $self->param_required('timestamp');
   my $base_output_dir = $self->param_required('base_output_dir');
   my $species_list    = $self->param_required('species_list');
@@ -65,6 +66,7 @@ sub write_output {
     email           => $email,
     ensembl_release => $ensembl_release,
     rest_server     => $rest_server,
+    auth_token      => $auth_token,
     submitted       => $submitted,
   );
   $self->dataflow_output_id(\%submission_output, 1);
@@ -80,6 +82,7 @@ sub write_output {
       species         => $species,
       ensembl_release => $ensembl_release,
       rest_server     => $rest_server,
+      auth_token      => $auth_token,
       output_dir      => $output_dir,
     };
     $self->dataflow_output_id($species_output, 2);

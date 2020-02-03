@@ -75,7 +75,7 @@ sub pipeline_analyses {
                        email           => $self->o('email'),
                        ensembl_release => $self->o('ensembl_release'),
                        rest_server     => $self->o('rest_server'),
-                       auth_token     => $self->o('auth_token'),
+                       auth_token      => $self->o('auth_token'),
                        timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
