@@ -101,47 +101,9 @@ sub pipeline_analyses {
       -rc_name    => 'default',
       -flow_into  => {
                        '1'    => ['?table_name=gifts_submission'],
-                       '2->A' => ['wait_for_uniprot_mappings'],
+                       '2->A' => ['prepare_uniprot_files'],
                        'A->3' => ['notify'],
                      },
-    },
-  
-    {
-      # Loop for 7 days maximum to detect if the UniProt mappings have been loaded into
-      # the GIFTS database for the given ensembl_species_history_id.
-
-      -logic_name => 'wait_for_uniprot_mappings',
-      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-      -parameters => {
-                        use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
-                        use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
-
-                        # 7 days (604800s) max checking every 10 minutes (600s)
-                        cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #output_dir#/#import_species_data_file#'.
-                               ' | awk \'{print $3}\');'.
-                               'end=$((SECONDS+604800));'.
-                               'while [[ ( $SECONDS -lt $end ) && '.
-                               '         ( '.
-                               '           ( $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ) || '.
-                               '           ( ( $ENSEMBLSPECIESHISTORYID == $ENSEMBLSPECIESHISTORYID_IN_RMH ) && ( $STATUS != "MAPPING_COMPLETED" ) ) ) ]]; do '.
-                                                       
-                               'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...";'.
-                               'ENSEMBLSPECIESHISTORYID_IN_RMH='.
-                               '$(wget -O - -o /dev/null '.
-                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
-                               ' | jq -r ".ensembl_species_history.ensembl_species_history_id");'.
-
-                               'STATUS='.
-                               '$(wget -O - -o /dev/null '.
-                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
-                               ' | jq -r ".status");'.
-                               'sleep 600;'.
-                               'done;'.
-                               'if [[ $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ]] || '.
-                               '   [[ $STATUS != "MAPPING_COMPLETED" ]]; then exit -1;fi'
-                     },
-      -rc_name   => 'default',
-      -flow_into => { 1 => ['prepare_uniprot_files'] },
     },
 
     {
@@ -164,9 +126,9 @@ sub pipeline_analyses {
                         use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                         cmd =>
                                'perl '.$self->o('prepare_uniprot_index_script').
-                               ' -uniprot_sp_file #uniprot_sp_file#'.
-                               ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
-                               ' -uniprot_tr_dir #uniprot_tr_dir#'
+                               ' -uniprot_sp_file #output_dir#/#uniprot_sp_file#'.
+                               ' -uniprot_sp_isoform_file #output_dir#/#uniprot_sp_isoform_file#'.
+                               ' -uniprot_tr_dir #output_dir#/#uniprot_tr_dir#'
                      },
       -rc_name   => 'default_35GB',
       -flow_into => { 1 => ['insert_alignment_run_id_for_perfect'] },
