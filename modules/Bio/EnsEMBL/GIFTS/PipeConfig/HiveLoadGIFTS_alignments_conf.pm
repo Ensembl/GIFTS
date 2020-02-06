@@ -53,7 +53,7 @@ sub default_options {
     enscode_root_dir             => $self->o('ensembl_cvs_root_dir'),
     prepare_uniprot_script       => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh',
     prepare_uniprot_index_script => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_index_prep.pl',
-    perfect_match_script         => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pages.pl',
+    perfect_match_script         => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pl',
     blast_cigar_script           => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',
 
     latest_release_mapping_history_url      => '/mappings/release_history/latest/assembly/',
@@ -95,7 +95,7 @@ sub pipeline_analyses {
                        email           => $self->o('email'),
                        ensembl_release => $self->o('ensembl_release'),
                        rest_server     => $self->o('rest_server'),
-                       auth_token     => $self->o('auth_token'),
+                       auth_token      => $self->o('auth_token'),
                        timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
@@ -156,9 +156,9 @@ sub pipeline_analyses {
                                  'userstamp: "'.$self->o('userstamp').'", '.
                                  'release_mapping_history: $rmh, '.
                                  'logfile_dir: "#output_dir#", '.
-                                 'uniprot_file_swissprot: "#uniprot_sp_file#", '.
-                                 'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
-                                 'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
+                                 'uniprot_file_swissprot: "#output_dir#/#uniprot_sp_file#", '.
+                                 'uniprot_file_isoform: "#output_dir#/#uniprot_sp_isoform_file#", '.
+                                 'uniprot_dir_trembl: "#output_dir#/#uniprot_tr_dir#", '.
                                  'ensembl_release: #ensembl_release# }\')'.
                                '" --header="Authorization:Bearer #auth_token#" --header=Content-Type:application/json '.'#rest_server#'.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\');'. # wget should return a json containing the alignment_run_id created
@@ -219,13 +219,13 @@ sub pipeline_analyses {
                                ' -species #species#'.
                                ' -release #ensembl_release#'.
                                ' -release_mapping_history_id $RELEASEMAPPINGHISTORYID'.
-                               ' -uniprot_sp_file #uniprot_sp_file#'.
-                               ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
-                               ' -uniprot_tr_dir #uniprot_tr_dir#'.
+                               ' -uniprot_sp_file #output_dir#/#uniprot_sp_file#'.
+                               ' -uniprot_sp_isoform_file #output_dir#/#uniprot_sp_isoform_file#'.
+                               ' -uniprot_tr_dir #output_dir#/#uniprot_tr_dir#'.
                                ' -pipeline_name '.$self->o('pipeline_name').
                                ' -pipeline_comment "'.$self->o('pipeline_comment_perfect_match').'"'.
-                               ' -rest_server '.$self->o('rest_server').
-                               ' -auth_token '.$self->o('auth_token').
+                               ' -rest_server #rest_server#'.
+                               ' -auth_token #auth_token#'.
                                ' -alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
                                ' -page "#expr(join(",",@{#_range_list#}))expr#"'
                      },
@@ -254,9 +254,9 @@ sub pipeline_analyses {
                                  'userstamp: "'.$self->o('userstamp').'", '.
                                  'release_mapping_history: $rmh, '.
                                  'logfile_dir: "#output_dir#", '.
-                                 'uniprot_file_swissprot: "#uniprot_sp_file#", '.
-                                 'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
-                                 'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
+                                 'uniprot_file_swissprot: "#output_dir#/#uniprot_sp_file#", '.
+                                 'uniprot_file_isoform: "#output_dir#/#uniprot_sp_isoform_file#", '.
+                                 'uniprot_dir_trembl: "#output_dir#/#uniprot_tr_dir#", '.
                                  'ensembl_release: #ensembl_release# }\')'.
                                '" --header="Authorization:Bearer #auth_token#" --header=Content-Type:application/json '.'#rest_server#'.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\''. # wget should return a json containing the alignment_run_id created
@@ -314,8 +314,8 @@ sub pipeline_analyses {
                                ' -registry_port '.$self->o('registry_port').
                                ' -pipeline_name '.$self->o('pipeline_name').
                                ' -pipeline_comment "'.$self->o('pipeline_comment_blast_cigar').'"'.
-                               ' -rest_server '.$self->o('rest_server').
-                               ' -auth_token '.$self->o('auth_token').
+                               ' -rest_server #rest_server#'.
+                               ' -auth_token #auth_token#'.
                                ' -output_dir #output_dir#'.
                                ' -alignment_run_id $ALIGNMENTRUNID'.
                                ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
