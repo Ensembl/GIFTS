@@ -186,6 +186,7 @@ $registry->load_registry_from_db(
     -pass => $registry_pass,
     -db_version => ''.$release
 );
+$registry->set_reconnect_when_lost();
 
 # EnsEMBL database connection
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
