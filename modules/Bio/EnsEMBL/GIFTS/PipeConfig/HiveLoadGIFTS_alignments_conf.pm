@@ -288,7 +288,7 @@ sub pipeline_analyses {
                         'done',
 
                         column_names => ['mapping_id'],
-                        step => 100,
+                        step => 25,
       },
       -flow_into => { '2->A' => [ 'blast_cigar_alignments' ],
                       'A->1' => [ 'set_alignment_completed' ]}
