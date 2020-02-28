@@ -53,7 +53,7 @@ sub default_options {
     enscode_root_dir             => $self->o('ensembl_cvs_root_dir'),
     prepare_uniprot_script       => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_prep.sh',
     prepare_uniprot_index_script => $self->o('enscode_root_dir').'/GIFTS/scripts/uniprot_fasta_index_prep.pl',
-    perfect_match_script         => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pages.pl',
+    perfect_match_script         => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_perfect_match.pl',
     blast_cigar_script           => $self->o('enscode_root_dir').'/GIFTS/scripts/eu_alignment_blast_cigar.pl',
 
     latest_release_mapping_history_url      => '/mappings/release_history/latest/assembly/',
@@ -95,53 +95,15 @@ sub pipeline_analyses {
                        email           => $self->o('email'),
                        ensembl_release => $self->o('ensembl_release'),
                        rest_server     => $self->o('rest_server'),
-                       auth_token     => $self->o('auth_token'),
+                       auth_token      => $self->o('auth_token'),
                        timestamp       => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
       -flow_into  => {
                        '1'    => ['?table_name=gifts_submission'],
-                       '2->A' => ['wait_for_uniprot_mappings'],
+                       '2->A' => ['prepare_uniprot_files'],
                        'A->3' => ['notify'],
                      },
-    },
-  
-    {
-      # Loop for 7 days maximum to detect if the UniProt mappings have been loaded into
-      # the GIFTS database for the given ensembl_species_history_id.
-
-      -logic_name => 'wait_for_uniprot_mappings',
-      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-      -parameters => {
-                        use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
-                        use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
-
-                        # 7 days (604800s) max checking every 10 minutes (600s)
-                        cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #output_dir#/#import_species_data_file#'.
-                               ' | awk \'{print $3}\');'.
-                               'end=$((SECONDS+604800));'.
-                               'while [[ ( $SECONDS -lt $end ) && '.
-                               '         ( '.
-                               '           ( $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ) || '.
-                               '           ( ( $ENSEMBLSPECIESHISTORYID == $ENSEMBLSPECIESHISTORYID_IN_RMH ) && ( $STATUS != "MAPPING_COMPLETED" ) ) ) ]]; do '.
-                                                       
-                               'echo "Fetching release_mapping_history_id for ensembl_species_history_id $ENSEMBLSPECIESHISTORYID ...";'.
-                               'ENSEMBLSPECIESHISTORYID_IN_RMH='.
-                               '$(wget -O - -o /dev/null '.
-                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
-                               ' | jq -r ".ensembl_species_history.ensembl_species_history_id");'.
-
-                               'STATUS='.
-                               '$(wget -O - -o /dev/null '.
-                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
-                               ' | jq -r ".status");'.
-                               'sleep 600;'.
-                               'done;'.
-                               'if [[ $ENSEMBLSPECIESHISTORYID != $ENSEMBLSPECIESHISTORYID_IN_RMH ]] || '.
-                               '   [[ $STATUS != "MAPPING_COMPLETED" ]]; then exit -1;fi'
-                     },
-      -rc_name   => 'default',
-      -flow_into => { 1 => ['prepare_uniprot_files'] },
     },
 
     {
@@ -164,9 +126,9 @@ sub pipeline_analyses {
                         use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
                         cmd =>
                                'perl '.$self->o('prepare_uniprot_index_script').
-                               ' -uniprot_sp_file #uniprot_sp_file#'.
-                               ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
-                               ' -uniprot_tr_dir #uniprot_tr_dir#'
+                               ' -uniprot_sp_file #output_dir#/#uniprot_sp_file#'.
+                               ' -uniprot_sp_isoform_file #output_dir#/#uniprot_sp_isoform_file#'.
+                               ' -uniprot_tr_dir #output_dir#/#uniprot_tr_dir#'
                      },
       -rc_name   => 'default_35GB',
       -flow_into => { 1 => ['insert_alignment_run_id_for_perfect'] },
@@ -194,9 +156,9 @@ sub pipeline_analyses {
                                  'userstamp: "'.$self->o('userstamp').'", '.
                                  'release_mapping_history: $rmh, '.
                                  'logfile_dir: "#output_dir#", '.
-                                 'uniprot_file_swissprot: "#uniprot_sp_file#", '.
-                                 'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
-                                 'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
+                                 'uniprot_file_swissprot: "#output_dir#/#uniprot_sp_file#", '.
+                                 'uniprot_file_isoform: "#output_dir#/#uniprot_sp_isoform_file#", '.
+                                 'uniprot_dir_trembl: "#output_dir#/#uniprot_tr_dir#", '.
                                  'ensembl_release: #ensembl_release# }\')'.
                                '" --header="Authorization:Bearer #auth_token#" --header=Content-Type:application/json '.'#rest_server#'.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\');'. # wget should return a json containing the alignment_run_id created
@@ -257,13 +219,13 @@ sub pipeline_analyses {
                                ' -species #species#'.
                                ' -release #ensembl_release#'.
                                ' -release_mapping_history_id $RELEASEMAPPINGHISTORYID'.
-                               ' -uniprot_sp_file #uniprot_sp_file#'.
-                               ' -uniprot_sp_isoform_file #uniprot_sp_isoform_file#'.
-                               ' -uniprot_tr_dir #uniprot_tr_dir#'.
+                               ' -uniprot_sp_file #output_dir#/#uniprot_sp_file#'.
+                               ' -uniprot_sp_isoform_file #output_dir#/#uniprot_sp_isoform_file#'.
+                               ' -uniprot_tr_dir #output_dir#/#uniprot_tr_dir#'.
                                ' -pipeline_name '.$self->o('pipeline_name').
                                ' -pipeline_comment "'.$self->o('pipeline_comment_perfect_match').'"'.
-                               ' -rest_server '.$self->o('rest_server').
-                               ' -auth_token '.$self->o('auth_token').
+                               ' -rest_server #rest_server#'.
+                               ' -auth_token #auth_token#'.
                                ' -alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
                                ' -page "#expr(join(",",@{#_range_list#}))expr#"'
                      },
@@ -292,9 +254,9 @@ sub pipeline_analyses {
                                  'userstamp: "'.$self->o('userstamp').'", '.
                                  'release_mapping_history: $rmh, '.
                                  'logfile_dir: "#output_dir#", '.
-                                 'uniprot_file_swissprot: "#uniprot_sp_file#", '.
-                                 'uniprot_file_isoform: "#uniprot_sp_isoform_file#", '.
-                                 'uniprot_dir_trembl: "#uniprot_tr_dir#", '.
+                                 'uniprot_file_swissprot: "#output_dir#/#uniprot_sp_file#", '.
+                                 'uniprot_file_isoform: "#output_dir#/#uniprot_sp_isoform_file#", '.
+                                 'uniprot_dir_trembl: "#output_dir#/#uniprot_tr_dir#", '.
                                  'ensembl_release: #ensembl_release# }\')'.
                                '" --header="Authorization:Bearer #auth_token#" --header=Content-Type:application/json '.'#rest_server#'.$self->o('alignment_run_url').
                                ' | jq -r \'.alignment_run_id\''. # wget should return a json containing the alignment_run_id created
@@ -326,7 +288,7 @@ sub pipeline_analyses {
                         'done',
 
                         column_names => ['mapping_id'],
-                        step => 100,
+                        step => 25,
       },
       -flow_into => { '2->A' => [ 'blast_cigar_alignments' ],
                       'A->1' => [ 'set_alignment_completed' ]}
@@ -352,8 +314,8 @@ sub pipeline_analyses {
                                ' -registry_port '.$self->o('registry_port').
                                ' -pipeline_name '.$self->o('pipeline_name').
                                ' -pipeline_comment "'.$self->o('pipeline_comment_blast_cigar').'"'.
-                               ' -rest_server '.$self->o('rest_server').
-                               ' -auth_token '.$self->o('auth_token').
+                               ' -rest_server #rest_server#'.
+                               ' -auth_token #auth_token#'.
                                ' -output_dir #output_dir#'.
                                ' -alignment_run_id $ALIGNMENTRUNID'.
                                ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
