@@ -158,9 +158,9 @@ my $alignment_run = rest_get($rest_server."/alignments/alignment_run/".$perfect_
 
 my $release_mapping_history_id = $alignment_run->{'release_mapping_history'};
 my $release = $alignment_run->{'ensembl_release'};
-my $uniprot_sp_file = $alignment_run->{'uniprot_file_swissprot'};
-my $uniprot_sp_isoform_file = $alignment_run->{'uniprot_file_isoform'};
-my $uniprot_tr_dir = $alignment_run->{'uniprot_dir_trembl'};
+my $uniprot_sp_file = $output_dir.'/'.$alignment_run->{'uniprot_file_swissprot'};
+my $uniprot_sp_isoform_file = $output_dir.'/'.$alignment_run->{'uniprot_file_isoform'};
+my $uniprot_tr_dir = $output_dir.'/'.$alignment_run->{'uniprot_dir_trembl'};
 
 print("Using previous alignment run values\n");
 print("Species=$species\n");
