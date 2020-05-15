@@ -76,6 +76,7 @@ sub rest_get {
   my $response = $http->get($server.$endpoint,{headers => { 'Content-type' => 'application/json' }});
 
   if (!($response->{'success'} or $response->{'status'} == 404)) { # the endpoints return 404 if something is not found but this is successful
+    print STDERR Dumper($response);
     die("REST server GET failed at endpoint: ".$server.$endpoint."\n");
   }
   
@@ -83,6 +84,7 @@ sub rest_get {
     # return reference to hash containing data in json format
     return (decode_json($response->{'content'}));
   } else {
+    print STDERR Dumper($response);
     die("REST server GET response length is 0. Failed at endpoint: ".$server.$endpoint."\n");
   }
 }
@@ -106,6 +108,7 @@ sub rest_post {
   }
 
   if (!($response->{'success'} or $response->{'task_id'})) {
+    print STDERR Dumper($response);
     die("REST server POST failed at endpoint: ".$endpoint."\n");
   }
   
@@ -113,6 +116,7 @@ sub rest_post {
     # return reference to hash containing data in json format
     return (decode_json($response->{'content'}));
   } else {
+    print STDERR Dumper($response);
     die("REST server POST response length is 0. Failed at endpoint: ".$endpoint."\n");
   }
 }
