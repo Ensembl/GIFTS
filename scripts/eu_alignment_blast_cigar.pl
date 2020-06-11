@@ -190,6 +190,7 @@ $registry->set_reconnect_when_lost();
 
 # EnsEMBL database connection
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
+$transcript_adaptor->dbc->disconnect_if_idle();
 print("Database adaptors opened\n");
 
 # Open the Uniprot archives that were used previously
