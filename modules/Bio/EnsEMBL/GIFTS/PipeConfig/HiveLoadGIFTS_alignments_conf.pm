@@ -112,7 +112,7 @@ sub pipeline_analyses {
       -parameters => {
                         use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
                         use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
-                        cmd => 'sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' #output_dir#'
+                        cmd => 'mkdir -p #output_dir# ; sh '.$self->o('prepare_uniprot_script').' '.$self->o('uniprot_dir').' #output_dir#'
                      },
       -rc_name   => 'default',
       -flow_into => { 1 => ['prepare_uniprot_files_indexes'] },
