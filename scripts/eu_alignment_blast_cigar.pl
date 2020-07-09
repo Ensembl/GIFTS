@@ -158,9 +158,9 @@ my $alignment_run = rest_get($rest_server."/alignments/alignment_run/".$perfect_
 
 my $release_mapping_history_id = $alignment_run->{'release_mapping_history'};
 my $release = $alignment_run->{'ensembl_release'};
-my $uniprot_sp_file = $output_dir.'/'.$alignment_run->{'uniprot_file_swissprot'};
-my $uniprot_sp_isoform_file = $output_dir.'/'.$alignment_run->{'uniprot_file_isoform'};
-my $uniprot_tr_dir = $output_dir.'/'.$alignment_run->{'uniprot_dir_trembl'};
+my $uniprot_sp_file = $alignment_run->{'uniprot_file_swissprot'};
+my $uniprot_sp_isoform_file = $alignment_run->{'uniprot_file_isoform'};
+my $uniprot_tr_dir = $alignment_run->{'uniprot_dir_trembl'};
 
 print("Using previous alignment run values\n");
 print("Species=$species\n");
@@ -200,7 +200,7 @@ push(@uniprot_archives,$uniprot_sp_isoform_file);
 
 # contains all the chunks from the trembl file
 if ($uniprot_tr_dir) {
-  opendir(TDIR,$uniprot_tr_dir) or die "Couldnt find trembl files";
+  opendir(TDIR,$uniprot_tr_dir) or die "Couldnt find trembl files at $uniprot_tr_dir";
   while (my $tfile = readdir(TDIR)) {
     next unless ($tfile =~ m/\.fa_chunk/);
     next unless ($tfile =~ m/\.gz$/);
