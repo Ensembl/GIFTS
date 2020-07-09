@@ -72,7 +72,7 @@ sub rest_get {
   
   my $server = "";
   
-  my $http = HTTP::Tiny->new();
+  my $http = HTTP::Tiny->new({'timeout' => 1800});
   my $response = $http->get($server.$endpoint,{headers => { 'Content-type' => 'application/json' }});
 
   if (!($response->{'success'} or $response->{'status'} == 301 or $response->{'status'} == 404)) { # the endpoints return 404 if something is not found but this is successful, 301 can also be considered as successful
@@ -125,8 +125,8 @@ sub rest_post {
 sub is_perfect_eu_match_uniparcs {
   my ($rest_server,$uniprot_id,$transcript_id) = @_;
 
-  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id);
-  my $transcript = rest_get($rest_server."/ensembl/transcript/".$transcript_id);
+  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id."/");
+  my $transcript = rest_get($rest_server."/ensembl/transcript/".$transcript_id."/");
 
   return $uniprot_entry->{'upi'} eq $transcript->{'uniparc_accession'};
 }
@@ -158,7 +158,7 @@ sub fetch_uniprot_info_for_id {
 sub fetch_uniprot_accession {
   my ($rest_server,$uniprot_id) = @_;
 
-  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id);
+  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id."/");
   my $uniprot_acc = $uniprot_entry->{'uniprot_acc'};
   my $sequence_version = $uniprot_entry->{'sequence_version'};
 
@@ -176,7 +176,7 @@ sub fetch_uniprot_accession {
 sub fetch_true_uniprot_accession {
   my ($rest_server,$uniprot_id) = @_;
   
-  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id);
+  my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id."/");
   my $uniprot_acc = $uniprot_entry->{'uniprot_acc'};
   my $sequence_version = $uniprot_entry->{'sequence_version'};
 
@@ -186,7 +186,7 @@ sub fetch_true_uniprot_accession {
 sub fetch_transcript_enst {
   my ($rest_server,$gifts_transcript_id) = @_;
   
-  my $transcript = rest_get($rest_server."/ensembl/transcript/".$gifts_transcript_id);
+  my $transcript = rest_get($rest_server."/ensembl/transcript/".$gifts_transcript_id."/");
 
   return $transcript->{'enst_id'};
 }
@@ -228,15 +228,15 @@ sub store_cigarmdz {
     }
   }
 
-  my $alignment = rest_get($rest_server."/alignments/alignment/".$alignment_id);
-  my $old_mapping = rest_get($rest_server."/mapping/".$alignment->{'mapping'});
+  my $alignment = rest_get($rest_server."/alignments/alignment/".$alignment_id."/");
+  my $old_mapping = rest_get($rest_server."/mapping/".$alignment->{'mapping'}."/");
   my $alignment_difference_response = rest_post($auth_token,$rest_server."/mapping/".$old_mapping->{'mapping'}->{'mappingId'}."/alignment_difference/".$alignment_difference."/");
 }
 
 sub fetch_cigarmdz {
   my ($rest_server,$alignment_id) = @_;
 
-  my $cigar = rest_get($rest_server."/ensembl/cigar/alignment/".$alignment_id);
+  my $cigar = rest_get($rest_server."/ensembl/cigar/alignment/".$alignment_id."/");
   my $cigar_plus_string = $cigar->{'cigarplus'};
   my $md_string = $cigar->{'mdz'};
 
