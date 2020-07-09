@@ -230,7 +230,7 @@ sub pipeline_analyses {
                                ' -page "#expr(join(",",@{#_range_list#}))expr#"'
                      },
       -rc_name    => 'default_35GB',
-      -analysis_capacity => 50,
+      -analysis_capacity => 25,
     },
 
     {
@@ -321,7 +321,7 @@ sub pipeline_analyses {
                                ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
                      },
       -rc_name    => 'default_35GB',
-      -analysis_capacity => 40,
+      -analysis_capacity => 25,
     },
     
     {
