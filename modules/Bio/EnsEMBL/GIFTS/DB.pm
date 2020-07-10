@@ -72,7 +72,7 @@ sub rest_get {
   
   my $server = "";
   
-  my $http = HTTP::Tiny->new({'timeout' => 1800});
+  my $http = HTTP::Tiny->new('timeout' => 1800);
   my $response = $http->get($server.$endpoint,{headers => { 'Content-type' => 'application/json' }});
 
   if (!($response->{'success'} or $response->{'status'} == 301 or $response->{'status'} == 404)) { # the endpoints return 404 if something is not found but this is successful, 301 can also be considered as successful
