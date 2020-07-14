@@ -231,6 +231,7 @@ sub pipeline_analyses {
                      },
       -rc_name    => 'default_35GB',
       -analysis_capacity => 25,
+      -max_retry_count => 2,
     },
 
     {
@@ -322,6 +323,7 @@ sub pipeline_analyses {
                      },
       -rc_name    => 'default_35GB',
       -analysis_capacity => 25,
+      -max_retry_count => 2,
     },
     
     {
