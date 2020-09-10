@@ -247,18 +247,19 @@ sub fetch_latest_uniprot_enst_perfect_matches {
 # It returns a reference to a hash containing Uniprot protein accessions as keys
 # and the corresponding Ensembl transcript stable IDs as an array of values for a given
 # species name (ie 'Homo sapiens') and assembly accession (ie 'GRCh38').
-
   my ($rest_server,$assembly) = @_;
-
-  my $latest_alignments = rest_get($rest_server."/alignments/alignment/latest/assembly/".$assembly."?alignment_type=perfect_match");
-  
+  my $next_url = $rest_server."/alignments/alignment/latest/assembly/".$assembly."?alignment_type=perfect_match";
   my %perfect_matches;
-  foreach my $alignment (@{$latest_alignments}) { # hash to array here?
-    my $uniprot_acc = fetch_true_uniprot_accession($rest_server,$alignment->{'uniprot_id'});
-    my $enst_id = fetch_transcript_enst($rest_server,$alignment->{'transcript'});
-    push(@{$perfect_matches{$uniprot_acc}},$enst_id);
+  my $latest_alignments;
+  while ($next_url) {
+    $latest_alignments = rest_get($next_url);
+    foreach my $alignment (@{$latest_alignments->{'results'}}) {
+      my $uniprot_acc = fetch_true_uniprot_accession($rest_server,$alignment->{'uniprot_id'});
+      my $enst_id = fetch_transcript_enst($rest_server,$alignment->{'transcript'});
+      push(@{$perfect_matches{$uniprot_acc}},$enst_id);
+    }
+    $next_url = $latest_alignments->{'next'};
   }
-
   return \%perfect_matches;
 }
 
