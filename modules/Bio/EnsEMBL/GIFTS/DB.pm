@@ -175,7 +175,7 @@ sub fetch_uniprot_accession {
 
 sub fetch_true_uniprot_accession {
   my ($rest_server,$uniprot_id) = @_;
-  
+
   my $uniprot_entry = rest_get($rest_server."/uniprot/entry/".$uniprot_id."/");
   my $uniprot_acc = $uniprot_entry->{'uniprot_acc'};
   my $sequence_version = $uniprot_entry->{'sequence_version'};
@@ -251,15 +251,17 @@ sub fetch_latest_uniprot_enst_perfect_matches {
   my $next_url = $rest_server."/alignments/alignment/latest/assembly/".$assembly."?alignment_type=perfect_match";
   my %perfect_matches;
   my $latest_alignments;
+
   while ($next_url) {
     $latest_alignments = rest_get($next_url);
     foreach my $alignment (@{$latest_alignments->{'results'}}) {
-      my $uniprot_acc = fetch_true_uniprot_accession($rest_server,$alignment->{'uniprot_id'});
+      my ($uniprot_acc,undef) = fetch_true_uniprot_accession($rest_server,$alignment->{'uniprot_id'});
       my $enst_id = fetch_transcript_enst($rest_server,$alignment->{'transcript'});
       push(@{$perfect_matches{$uniprot_acc}},$enst_id);
     }
     $next_url = $latest_alignments->{'next'};
   }
+
   return \%perfect_matches;
 }
 
