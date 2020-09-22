@@ -184,7 +184,7 @@ sub pipeline_analyses {
                         '#rest_server#'.$self->o('mappings_by_release_mapping_history_url').'$RELEASEMAPPINGHISTORYID'.
                           ' | jq -r ".count");'.
                         
-                        'for PAGENUM in $(seq 1 $(((NUMMAPPINGS+9)/10)));'. # (NUMMAPPINGS+9/10 is the number of pages of 10 elements returned by the REST API 
+                        'for PAGENUM in $(seq 1 $(((NUMMAPPINGS+19)/20)));'. # (NUMMAPPINGS+19/20 is the number of pages of 20 elements returned by the REST API 
                         'do '.
                           'echo $PAGENUM;'.
                         'done',
