@@ -112,8 +112,9 @@ sub resource_classes {
   my $self = shift;
   return {
     'default'      => { LSF => '-q production-rh74 -M1900 -R"select[mem>1900] rusage[mem=1900]"' },
-    'default_25GB' => { LSF => '-q production-rh74 -M20000 -R"select[mem>25000] rusage[mem=25000]"' },
-    'default_50GB' => { LSF => '-q production-rh74 -M35000 -R"select[mem>50000] rusage[mem=50000]"' },
+    'default_20GB' => { LSF => '-q production-rh74 -M20000 -R"select[mem>20000] rusage[mem=20000]"' },
+    'default_25GB' => { LSF => '-q production-rh74 -M25000 -R"select[mem>25000] rusage[mem=25000]"' },
+    'default_50GB' => { LSF => '-q production-rh74 -M50000 -R"select[mem>50000] rusage[mem=50000]"' },
   }
 }
 
