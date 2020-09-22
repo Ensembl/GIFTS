@@ -321,9 +321,41 @@ sub pipeline_analyses {
                                ' -alignment_run_id $ALIGNMENTRUNID'.
                                ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
                      },
-      -rc_name    => 'default_35GB',
-      -analysis_capacity => 25,
-      -max_retry_count => 2,
+      -rc_name    => 'default_25GB',
+      -analysis_capacity => 100,
+      -max_retry_count => 8,
+      -flow_into  => { -1 => ['blast_cigar_alignments_himem'] },
+    },
+    
+    {
+      -logic_name => 'blast_cigar_alignments_himem',
+      -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+      -parameters => {
+                        use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+                        use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
+                        cmd =>
+                               'PERFECTMATCHALIGNMENTRUNID=$(head -n1 #output_dir#/#perfect_alignment_run_id_file# | awk \'{print $1}\');'.
+
+                               'ALIGNMENTRUNID=$(head -n1 #output_dir#/#blast_alignment_run_id_file# | awk \'{print $1}\');'.
+
+                               'perl '.$self->o('blast_cigar_script').
+                               ' -user '.$self->o('userstamp').
+                               ' -species #species#'.
+                               ' -perfect_match_alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
+                               ' -registry_host '.$self->o('registry_host').
+                               ' -registry_user '.$self->o('registry_user').
+                               ' -registry_port '.$self->o('registry_port').
+                               ' -pipeline_name '.$self->o('pipeline_name').
+                               ' -pipeline_comment "'.$self->o('pipeline_comment_blast_cigar').'"'.
+                               ' -rest_server #rest_server#'.
+                               ' -auth_token #auth_token#'.
+                               ' -output_dir #output_dir#'.
+                               ' -alignment_run_id $ALIGNMENTRUNID'.
+                               ' -mapping_id "#expr(join(",",@{#_range_list#}))expr#"'
+                     },
+      -rc_name    => 'default_50GB',
+      -analysis_capacity => 100,
+      -max_retry_count => 8,
     },
     
     {
