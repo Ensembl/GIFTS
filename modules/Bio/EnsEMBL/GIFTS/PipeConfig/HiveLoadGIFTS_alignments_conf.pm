@@ -130,7 +130,7 @@ sub pipeline_analyses {
                                ' -uniprot_sp_isoform_file #output_dir#/#uniprot_sp_isoform_file#'.
                                ' -uniprot_tr_dir #output_dir#/#uniprot_tr_dir#'
                      },
-      -rc_name   => 'default_35GB',
+      -rc_name   => 'default_50GB',
       -flow_into => { 1 => ['insert_alignment_run_id_for_perfect'] },
     },
 
@@ -229,7 +229,7 @@ sub pipeline_analyses {
                                ' -alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
                                ' -page "#expr(join(",",@{#_range_list#}))expr#"'
                      },
-      -rc_name    => 'default_35GB',
+      -rc_name    => 'default_50GB',
       -analysis_capacity => 25,
       -max_retry_count => 2,
     },
