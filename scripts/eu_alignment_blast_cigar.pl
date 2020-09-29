@@ -245,128 +245,107 @@ my $analysis_obj = new Bio::EnsEMBL::Analysis(
       -web_data        => 'eu_blastp'
    );
 
-my %mapping_id_hash = {};
-$mapping_id_hash{$_}++ for (split(/,/,$mapping_id));
-
 # the main loop
+MAPPING: foreach my $mapping (@{split(/,/,$mapping_id}) {
 
-# fetch the items we want to update
-my $next_url = $rest_server."/alignments/alignment/alignment_run/".$perfect_match_alignment_run_id;
+  my $alignment = rest_get($rest_server."/alignments/alignment/alignment_run/".$perfect_match_alignment_run_id."/?mapping_id=".$mapping_id);
+  my $alignment_mapping_id = $alignment->{'mapping'};
 
-my $alignments;
-while ($next_url) {
+  if ($alignment->{'score1'}) {
+    # we want to loop through the aligments whose score1 is 0
+    # score1 = 0 means there was not perfect match
+    # score1 = 1 means there was a perfect match
+    next MAPPING;
+  }
 
-  print STDERR "Fetching the alignments from $next_url ...\n";
-  $alignments = rest_get($next_url);
-  print STDERR scalar(@{$alignments->{'results'}})." alignments fetched out of ".$alignments->{'count'}.".\n";
+  my $uniprot_id = $alignment->{'uniprot_id'};
+  my $gifts_transcript_id = $alignment->{'transcript'};
+  my $alignment_id = $alignment->{'alignment_id'};
 
-ALIGNMENT: foreach my $alignment (@{$alignments->{'results'}}) {
+  print(DEBUG_INFO "PROCESSING alignment_mapping_id:$alignment_mapping_id,uniprot_id:$uniprot_id,gifts_transcript_id:$gifts_transcript_id\n");
 
-    my $alignment_mapping_id = $alignment->{'mapping'};
+  # get the uniprot accession,sequence version,sequence
+  my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) = fetch_uniprot_info_for_id($rest_server,$uniprot_id,@uniprot_archive_parsers);
 
-    if ($alignment->{'score1'} or ($mapping_id and !exists($mapping_id_hash{$alignment_mapping_id}))) {
-      # we want to loop through the aligments whose score1 is 0
-      # score1 = 0 means there was not perfect match
-      # score1 = 1 means there was a perfect match
-      next ALIGNMENT;
-    }
+  # Get the Ensembl transcript ID and translated sequence
+  my $enst_id = fetch_transcript_enst($rest_server,$gifts_transcript_id);
+  print(DEBUG_INFO "transcript id=$gifts_transcript_id enst_id=$enst_id\n");
+  my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
 
-    my $uniprot_id = $alignment->{'uniprot_id'};
-    my $gifts_transcript_id = $alignment->{'transcript'};
-    my $alignment_id = $alignment->{'alignment_id'};
+  # perform the alignment
+  if ($uniprot_seq && $transcript->translate) {
+    my $ens_translation = $transcript->translation();
 
-    print(DEBUG_INFO "PROCESSING alignment_mapping_id:$alignment_mapping_id,uniprot_id:$uniprot_id,gifts_transcript_id:$gifts_transcript_id\n");
-
-    # get the uniprot accession,sequence version,sequence
-    my ($uniprot_seq,$uniprot_acc,$uniprot_seq_version) = fetch_uniprot_info_for_id($rest_server,$uniprot_id,@uniprot_archive_parsers);
-
-    # Get the Ensembl transcript ID and translated sequence
-    my $enst_id = fetch_transcript_enst($rest_server,$gifts_transcript_id);
-    print(DEBUG_INFO "transcript id=$gifts_transcript_id enst_id=$enst_id\n");
-    my $transcript = $transcript_adaptor->fetch_by_stable_id($enst_id);
-
-    # perform the alignment
-    if ($uniprot_seq && $transcript->translate) {
-      my $ens_translation = $transcript->translation();
-
-      my $score = 0;
-      # align - in this case it's about running blastp
-      my $target_u = Bio::Seq->new(
-			      '-display_id' => $uniprot_acc,
+    my $score = 0;
+    # align - in this case it's about running blastp
+    my $target_u = Bio::Seq->new(
+       	                      '-display_id' => $uniprot_acc,
 			      '-seq'        => $uniprot_seq,
 			     );
-      my $translation = Bio::Seq->new(
+    my $translation = Bio::Seq->new(
 			      '-display_id' => $ens_translation->stable_id,
 			      '-seq'        => $ens_translation->seq,
 			     );
 
-      if ($write_blast) {
-        # set the uniprot as the target and create index for the run
-        open UNIPROT_SEQ_FILE,">".$useq_file or die $!;
-        print UNIPROT_SEQ_FILE ">".$uniprot_acc."\n";
-        print UNIPROT_SEQ_FILE $uniprot_seq."\n";
-        close UNIPROT_SEQ_FILE;
-        system("makeblastdb -in $useq_file -dbtype prot");
+    if ($write_blast) {
+      # set the uniprot as the target and create index for the run
+      open UNIPROT_SEQ_FILE,">".$useq_file or die $!;
+      print UNIPROT_SEQ_FILE ">".$uniprot_acc."\n";
+      print UNIPROT_SEQ_FILE $uniprot_seq."\n";
+      close UNIPROT_SEQ_FILE;
+      system("makeblastdb -in $useq_file -dbtype prot");
 
-        my $blast =  Bio::EnsEMBL::GIFTS::Runnable::BlastP->new
-          ('-query'     => $translation,
-           '-program'   => 'blastp',
-           '-database'  => $useq_file,
-           '-threshold' => 1e-6,
-           '-parser'    => $bplitewrapper,
-           '-options'   => '-num_threads=1',
-           '-analysis'  => $analysis_obj,
-         );
+      my $blast =  Bio::EnsEMBL::GIFTS::Runnable::BlastP->new
+        ('-query'     => $translation,
+         '-program'   => 'blastp',
+         '-database'  => $useq_file,
+         '-threshold' => 1e-6,
+         '-parser'    => $bplitewrapper,
+         '-options'   => '-num_threads=1',
+         '-analysis'  => $analysis_obj,
+        );
 
-        $blast->run();
-        my $r = @{$blast->output}[0];
+      $blast->run();
+      my $r = @{$blast->output}[0];
 
-        if ($r) {
-          my $coverage = ($r->length) / length($translation->seq);
-          $alignment_id = store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$alignment_mapping_id,$r->percent_id,$coverage,undef);
-        }
-        else {
-          print UNIPROT_NOSEQS "ERROR: NO BLASTP RESULTS PARSED\n";
-          print UNIPROT_NOSEQS ">".$translation->id."\n";
-          print UNIPROT_NOSEQS $translation->seq."\n";
-          print UNIPROT_NOSEQS ">$uniprot_acc\n";
-          print UNIPROT_NOSEQS "$uniprot_seq\n";
-        }
-        # delete the created file
-        unlink $useq_file or die ("Could not delete $useq_file");
+      if ($r) {
+        my $coverage = ($r->length) / length($translation->seq);
+        $alignment_id = store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$alignment_mapping_id,$r->percent_id,$coverage,undef);
+      } else {
+        print UNIPROT_NOSEQS "ERROR: NO BLASTP RESULTS PARSED\n";
+        print UNIPROT_NOSEQS ">".$translation->id."\n";
+        print UNIPROT_NOSEQS $translation->seq."\n";
+        print UNIPROT_NOSEQS ">$uniprot_acc\n";
+        print UNIPROT_NOSEQS "$uniprot_seq\n";
       }
-      if ($write_cigar) {
-        # check for an existing entry in the cigar table
-        my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($rest_server,$alignment_id);
-        if (!$existing_cigar) {
+      # delete the created file
+      unlink $useq_file or die ("Could not delete $useq_file");
+    }
+    if ($write_cigar) {
+      # check for an existing entry in the cigar table
+      my ($existing_cigar,$existing_mdz) = fetch_cigarmdz($rest_server,$alignment_id);
+      if (!$existing_cigar) {
 
-          # run muscle
-          my ($seqobj_compu,$seqobj_compe) = run_muscle($target_u,$translation,$output_dir);
+        # run muscle
+        my ($seqobj_compu,$seqobj_compe) = run_muscle($target_u,$translation,$output_dir);
 
-          # store the results
-          my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
-          my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
-          store_cigarmdz($auth_token,$rest_server,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
-          $cigar_id_count++;
-        }
+        # store the results
+        my $cigar_plus_string = make_cigar_plus_string($seqobj_compu->seq,$seqobj_compe->seq);
+        my $md_string = make_md_string($seqobj_compu->seq,$seqobj_compe->seq);
+        store_cigarmdz($auth_token,$rest_server,$alignment_id,$cigar_plus_string,$md_string) if ($alignment_id != 0);
+        $cigar_id_count++;
       }
     }
-    else {
-      if ($transcript->translate) {
-        print(UNIPROT_NOSEQS "UNIPROT,$alignment_mapping_id,$uniprot_acc,\n");
-      }
-      elsif ($uniprot_seq) {
-        print(UNIPROT_NOSEQS "ENSP,$alignment_mapping_id,$enst_id\n");
-      }
-      else {
-        print(UNIPROT_NOSEQS "BOTH,$alignment_mapping_id,$uniprot_acc accession,$enst_id\n");
-      }
+  } else {
+    if ($transcript->translate) {
+      print(UNIPROT_NOSEQS "UNIPROT,$alignment_mapping_id,$uniprot_acc,\n");
+    } elsif ($uniprot_seq) {
+      print(UNIPROT_NOSEQS "ENSP,$alignment_mapping_id,$enst_id\n");
+    } else {
+      print(UNIPROT_NOSEQS "BOTH,$alignment_mapping_id,$uniprot_acc accession,$enst_id\n");
     }
-  } # foreach alignment
-  
-  $next_url = $alignments->{'next'};
-  
-} # while next_url
+  }
+} # foreach mapping
 CLOSE:
 
 close DEBUG_INFO;
