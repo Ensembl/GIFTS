@@ -280,7 +280,7 @@ sub pipeline_analyses {
                         '#rest_server#'.$self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID'. # alignment_type parameter by default is "perfect_match"
                           ' | jq -r ".count");'.
 
-                        'for PAGENUM in $(seq 1 $(((NUMALIGNMENTS+`19)/20)));'. # (NUMALIGNMENTS+9/10 is the number of pages of 10 elements returned by the REST API 
+                        'for PAGENUM in $(seq 1 $(((NUMALIGNMENTS+19)/20)));'. # (NUMALIGNMENTS+9/10 is the number of pages of 10 elements returned by the REST API 
                         'do '.
                           'wget -O - -o /dev/null '.
                         '#rest_server#'.$self->o('alignments_by_alignment_run_url').'$PERFECTMATCHALIGNMENTRUNID/?page=$PAGENUM'.
