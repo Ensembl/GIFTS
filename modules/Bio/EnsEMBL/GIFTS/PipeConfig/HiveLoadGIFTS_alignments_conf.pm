@@ -102,7 +102,7 @@ sub pipeline_analyses {
       -flow_into  => {
                        '1'    => ['?table_name=gifts_submission'],
                        '2->A' => ['prepare_uniprot_files'],
-                       'A->3' => ['set_alignment_completed'],
+                       'A->3' => ['notify'],
                      },
     },
 
