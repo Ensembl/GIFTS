@@ -248,7 +248,8 @@ my $analysis_obj = new Bio::EnsEMBL::Analysis(
 # the main loop
 MAPPING: foreach my $mapping (@{split(/,/,$mapping_id)}) {
 
-  my $alignment = rest_get($rest_server."/alignments/alignment/alignment_run/".$perfect_match_alignment_run_id."/?mapping_id=".$mapping);
+  my $alignment_response = rest_get($rest_server."/alignments/alignment/alignment_run/".$perfect_match_alignment_run_id."/?mapping_id=".$mapping);
+  my $alignment = shift @{$alignment_response->{'results'}};
   my $alignment_mapping_id = $alignment->{'mapping'};
 
   if ($alignment->{'score1'}) {
