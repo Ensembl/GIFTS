@@ -154,7 +154,7 @@ my $useq_file = $output_dir."/uniprot_seq_".$first_mapping_id.".fa";
 # mapping history run
 # ensembl release
 
-my $alignment_run = rest_get($rest_server."/alignments/alignment_run/".$perfect_match_alignment_run_id);
+my $alignment_run = rest_get($rest_server."/alignments/alignment_run/".$perfect_match_alignment_run_id."/");
 
 my $release_mapping_history_id = $alignment_run->{'release_mapping_history'};
 my $release = $alignment_run->{'ensembl_release'};
