@@ -364,9 +364,11 @@ sub pipeline_analyses {
       -parameters => {
                         use_bash_pipefail => 1, # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
                         use_bash_errexit  => 1, # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
-                        cmd => 'ENSEMBLSPECIESHISTORYID=$(grep "Added ensembl_species_history_id" #output_dir#/#import_species_data_file#'.
-                               ' | awk \'{print $3}\');'.
-
+                        cmd => 'ENSEMBLSPECIESHISTORYID='.
+                               '$(wget -O - -o /dev/null '.
+                               '#rest_server#'.$self->o('latest_release_mapping_history_url').'#assembly#/'.
+                               ' | jq -r ".ensembl_species_history" | jq -r ".ensembl_species_history_id");'.
+                               
                                'wget -O- --post-data="" '.
                                '--header="Authorization:Bearer #auth_token#" --header=Content-Type:application/json '.
                                '#rest_server#'.$self->o('set_alignment_status_url').
