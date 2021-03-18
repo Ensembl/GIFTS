@@ -28,6 +28,8 @@ use warnings;
 use feature 'say';
 
 use File::Spec::Functions qw(catdir);
+use JSON qw(encode_json);
+use Time::Piece;
 
 use base ('Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail');
 
@@ -44,11 +46,16 @@ sub write_output {
   my $self = shift;
 
   my $output = {
-    job_id => $self->param('job_id'),
-    output => $self->param('base_output_dir'),
+    output_dir => $self->param('base_output_dir'),
+    timestamp  => localtime->cdate
   };
 
-  $self->dataflow_output_id($output, 1);
+  my $result = {
+    job_id => $self->param('job_id'),
+    output => encode_json($output),
+  };
+
+  $self->dataflow_output_id($result, 1);
 }
 
 sub set_email_parameters {
