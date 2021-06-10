@@ -111,10 +111,10 @@ sub pipeline_create_commands {
 sub resource_classes {
   my $self = shift;
   return {
-    'default'      => { LSF => '-q production -M  2000 -R "rusage[mem=2000]"' },
-    'default_20GB' => { LSF => '-q production -M 20000 -R "rusage[mem=20000]"' },
-    'default_25GB' => { LSF => '-q production -M 25000 -R "rusage[mem=25000]"' },
-    'default_50GB' => { LSF => '-q production -M 50000 -R "rusage[mem=50000]"' },
+    'default'      => { LSF => '-q production -M  2000' },
+    'default_20GB' => { LSF => '-q production -M 20000' },
+    'default_25GB' => { LSF => '-q production -M 25000' },
+    'default_50GB' => { LSF => '-q production -M 50000' },
   }
 }
 
