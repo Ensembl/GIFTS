@@ -112,6 +112,7 @@ sub resource_classes {
   my $self = shift;
   return {
     'default'      => { LSF => '-q production -M  2000' },
+    'datamover'    => { LSF => '-q datamover  -M  2000' },
     'default_20GB' => { LSF => '-q production -M 20000' },
     'default_25GB' => { LSF => '-q production -M 25000' },
     'default_50GB' => { LSF => '-q production -M 50000' },
