@@ -42,8 +42,24 @@ sub default_options {
         species    => 'homo_sapiens',
       },
       {
-        assembly => 'GRCm38',
-        species  => 'mus_musculus',
+        assembly   => 'GRCm38',
+        species    => 'mus_musculus',
+      },
+      {
+        assembly   => 'GRCz11',
+        species    => 'danio_rerio',
+      },
+      {
+        assembly   => 'Rnor_6.0',
+        species    => 'rattus_norvegicus',
+      },
+      {
+        assembly   => 'Glycine_max_v2.1',
+        species    => 'glycine_max',
+      },
+      {
+        assembly   => 'Zm-B73-REFERENCE-NAM-5.0',
+        species    => 'zea_mays',
       }
     ],
 
