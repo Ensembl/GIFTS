@@ -42,7 +42,7 @@ sub default_options {
         species    => 'homo_sapiens',
       },
       {
-        assembly   => 'GRCm38',
+        assembly   => 'GRCm39',
         species    => 'mus_musculus',
       },
       {
