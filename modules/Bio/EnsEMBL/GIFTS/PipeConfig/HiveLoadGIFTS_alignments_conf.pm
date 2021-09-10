@@ -24,9 +24,8 @@ limitations under the License.
  Alignment of Ensembl and UniProt data.
  
  Mandatory parameters without default values:
-  -registry_host    mysql server with core databases
-  -registry_port    mysql port number
-  -registry_user    read-only user
+  -registry_vert     DB server containing vertebrate species, in url format
+  -registry_nonvert  DB server containing non-vertebrate species, in url format
   -uniprot_dir      path to UniProt fasta files
   -base_output_dir  Location of output files
 
@@ -89,14 +88,16 @@ sub pipeline_analyses {
       -logic_name => 'submit',
       -module     => 'Bio::EnsEMBL::GIFTS::Submit',
       -parameters => {
-                       species_list    => $self->o('species_list'),
-                       base_output_dir => $self->o('base_output_dir'),
-                       tag             => $self->o('tag'),
-                       email           => $self->o('email'),
-                       ensembl_release => $self->o('ensembl_release'),
-                       rest_server     => $self->o('rest_server'),
-                       auth_token      => $self->o('auth_token'),
-                       timestamp       => $self->o('timestamp'),
+                       registry_vert    => $self->o('registry_vert'),
+                       registry_nonvert => $self->o('registry_nonvert'),
+                       species_list     => $self->o('species_list'),
+                       base_output_dir  => $self->o('base_output_dir'),
+                       tag              => $self->o('tag'),
+                       email            => $self->o('email'),
+                       ensembl_release  => $self->o('ensembl_release'),
+                       rest_server      => $self->o('rest_server'),
+                       auth_token       => $self->o('auth_token'),
+                       timestamp        => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
       -flow_into  => {
@@ -212,9 +213,8 @@ sub pipeline_analyses {
                                
                                'perl '.$self->o('perfect_match_script').
                                ' -output_dir #output_dir#'.
-                               ' -registry_host '.$self->o('registry_host').
-                               ' -registry_user '.$self->o('registry_user').
-                               ' -registry_port '.$self->o('registry_port').
+                               ' -registry_vert #registry_vert#'.
+                               ' -registry_nonvert #registry_nonvert#'.
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
                                ' -release #ensembl_release#'.
@@ -310,9 +310,8 @@ sub pipeline_analyses {
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
                                ' -perfect_match_alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
-                               ' -registry_host '.$self->o('registry_host').
-                               ' -registry_user '.$self->o('registry_user').
-                               ' -registry_port '.$self->o('registry_port').
+                               ' -registry_vert #registry_vert#'.
+                               ' -registry_nonvert #registry_nonvert#'.
                                ' -pipeline_name '.$self->o('pipeline_name').
                                ' -pipeline_comment "'.$self->o('pipeline_comment_blast_cigar').'"'.
                                ' -rest_server #rest_server#'.
@@ -342,9 +341,8 @@ sub pipeline_analyses {
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
                                ' -perfect_match_alignment_run_id $PERFECTMATCHALIGNMENTRUNID'.
-                               ' -registry_host '.$self->o('registry_host').
-                               ' -registry_user '.$self->o('registry_user').
-                               ' -registry_port '.$self->o('registry_port').
+                               ' -registry_vert #registry_vert#'.
+                               ' -registry_nonvert #registry_nonvert#'.
                                ' -pipeline_name '.$self->o('pipeline_name').
                                ' -pipeline_comment "'.$self->o('pipeline_comment_blast_cigar').'"'.
                                ' -rest_server #rest_server#'.
@@ -391,3 +389,4 @@ sub pipeline_analyses {
 }
 
 1;
+

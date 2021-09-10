@@ -51,10 +51,8 @@ my $species = 'homo_sapiens';
 my $user;
 my $release;
 
-my $registry_host;
-my $registry_user;
-my $registry_pass;
-my $registry_port;
+my $registry_vert;
+my $registry_nonvert;
 
 my $rest_server;
 my $auth_token;
@@ -63,16 +61,18 @@ GetOptions(
         'user=s' => \$user,
         'species=s' => \$species,
         'release=s' => \$release,
-        'registry_host=s' => \$registry_host,
-        'registry_user=s' => \$registry_user,
-        'registry_pass=s' => \$registry_pass,
-        'registry_port=s' => \$registry_port,
+        'registry_vert=s' => \$registry_vert,
+        'registry_nonvert=s' => \$registry_nonvert,
         'rest_server=s' => \$rest_server,
         'auth_token=s' => \$auth_token,
 );
 
-if (!$registry_host or !$registry_user or !$registry_port) {
-  die("Please specify the registry host details with --registry_host, --registry_user and --registry_port.");
+if (!$registry_vert) {
+  die("Please specify a vertebrate registry file with --registry_vert");
+}
+
+if (!$registry_nonvert) {
+  die("Please specify a non-vertebrate registry file with --registry_nonvert");
 }
 
 if (!$release) {
@@ -92,13 +92,8 @@ print "Run by $user\n";
 
 # Connect to the Ensembl database
 my $registry = "Bio::EnsEMBL::Registry";
-$registry->load_registry_from_db(
-    -host => $registry_host,
-    -user => $registry_user,
-    -port => $registry_port,
-    -pass => $registry_pass,
-    -db_version => ''.$release
-);
+$registry->load_registry_from_url($registry_vert);
+$registry->load_registry_from_url($registry_nonvert);
 
 # Get the slice_adaptor
 my $slice_adaptor = $registry->get_adaptor($species,'core','Slice');
@@ -280,3 +275,4 @@ if (scalar(@json_genes)) {
 print "Genes:".$gene_count."\n";
 print "Transcripts:".$transcript_count."\n";
 print "Finished\n";
+
