@@ -27,6 +27,7 @@ use strict;
 use warnings;
 use feature 'say';
 
+use Bio::EnsEMBL::Registry;
 use File::Spec::Functions qw(catdir);
 use Time::Piece;
 
@@ -49,14 +50,16 @@ sub write_output {
     $self->param('timestamp', localtime->cdate);
   }
 
-  my $tag             = $self->param('tag');
-  my $email           = $self->param_required('email');
-  my $ensembl_release = $self->param_required('ensembl_release');
-  my $rest_server     = $self->param_required('rest_server');
-  my $auth_token      = $self->param_required('auth_token');
-  my $submitted       = $self->param_required('timestamp');
-  my $base_output_dir = $self->param_required('base_output_dir');
-  my $species_list    = $self->param_required('species_list');
+  my $tag              = $self->param('tag');
+  my $email            = $self->param_required('email');
+  my $ensembl_release  = $self->param_required('ensembl_release');
+  my $rest_server      = $self->param_required('rest_server');
+  my $auth_token       = $self->param_required('auth_token');
+  my $submitted        = $self->param_required('timestamp');
+  my $registry_vert    = $self->param_required('registry_vert');
+  my $registry_nonvert = $self->param_required('registry_nonvert');
+  my $base_output_dir  = $self->param_required('base_output_dir');
+  my $species_list     = $self->param_required('species_list');
 
   # A subset of the input parameters are stored in the 'gifts_submission'
   # table, for easier subsequent retrieval than querying the native hive tables.
@@ -71,19 +74,29 @@ sub write_output {
   );
   $self->dataflow_output_id(\%submission_output, 1);
 
-  foreach (@$species_list) {
-    my $assembly   = $$_{'assembly'};
-    my $species    = $$_{'species'};
+  # If registry urls do not already include a release version, add it.
+  $registry_vert .= $ensembl_release unless $registry_vert =~ /\d$/;
+  $registry_nonvert .= $ensembl_release unless $registry_nonvert =~ /\d$/;
+
+  my $registry = "Bio::EnsEMBL::Registry";
+  $registry->load_registry_from_url($registry_vert);
+  $registry->load_registry_from_url($registry_nonvert);
+
+  foreach my $species (@$species_list) {
+    my $mca = $registry->get_adaptor($species, 'Core', 'MetaContainer');
+    my $assembly = $mca->single_value_by_key('assembly.default');
 
     my $output_dir = catdir($base_output_dir, $ensembl_release, $species);
 
     my $species_output = {
-      assembly        => $assembly,
-      species         => $species,
-      ensembl_release => $ensembl_release,
-      rest_server     => $rest_server,
-      auth_token      => $auth_token,
-      output_dir      => $output_dir,
+      registry_vert    => $registry_vert,
+      registry_nonvert => $registry_nonvert,
+      assembly         => $assembly,
+      species          => $species,
+      ensembl_release  => $ensembl_release,
+      rest_server      => $rest_server,
+      auth_token       => $auth_token,
+      output_dir       => $output_dir,
     };
     $self->dataflow_output_id($species_output, 2);
   }
@@ -96,3 +109,4 @@ sub write_output {
 }
 
 1;
+

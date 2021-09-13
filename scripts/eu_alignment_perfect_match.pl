@@ -54,10 +54,8 @@ use Bio::EnsEMBL::GIFTS::DB qw(rest_get rest_post fetch_uniprot_info_for_id stor
 my $output_dir = "";
 my $output_prefix = "alignment_log";
 
-my $registry_host;
-my $registry_user;
-my $registry_pass;
-my $registry_port;
+my $registry_vert;
+my $registry_nonvert;
 
 my $user;
 my $species = "homo_sapiens";
@@ -82,10 +80,8 @@ my $page = 0;
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
-        'registry_host=s' => \$registry_host,
-        'registry_user=s' => \$registry_user,
-        'registry_pass=s' => \$registry_pass,
-        'registry_port=s' => \$registry_port,
+        'registry_vert=s' => \$registry_vert,
+        'registry_nonvert=s' => \$registry_nonvert,
         'user=s' => \$user,
         'species=s' => \$species,
         'release=i' => \$release,
@@ -102,8 +98,12 @@ GetOptions(
         'page=s' => \$page
    );
 
-if (!$registry_host or !$registry_user or !$registry_port) {
-  die("Please specify the registry host details with --registry_host, --registry_user and --registry_port.");
+if (!$registry_vert) {
+  die("Please specify a vertebrate registry file with --registry_vert");
+}
+
+if (!$registry_nonvert) {
+  die("Please specify a non-vertebrate registry file with --registry_nonvert");
 }
 
 if (!$user) {
@@ -176,13 +176,8 @@ print "Opened uniprot archives\n";
 
 # Create the registry
 my $registry = "Bio::EnsEMBL::Registry";
-$registry->load_registry_from_db(
-    -host => $registry_host,
-    -user => $registry_user,
-    -port => $registry_port,
-    -pass => $registry_pass,
-    -db_version => ''.$release
-);
+$registry->load_registry_from_url($registry_vert);
+$registry->load_registry_from_url($registry_nonvert);
 
 # EnsEMBL database connection
 my $transcript_adaptor = Bio::EnsEMBL::Registry->get_adaptor($species,"core","transcript");
@@ -300,3 +295,4 @@ while ($next_url) {
 CLOSE:
 close UNIPROT_SEQS;
 close UNIPROT_NOSEQS;
+

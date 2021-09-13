@@ -24,10 +24,9 @@ limitations under the License.
  Export Ensembl genes from core databases.
  
  Mandatory parameters without default values:
-  -registry_host    mysql server with core databases
-  -registry_port    mysql port number
-  -registry_user    read-only user
-  -base_output_dir  Location of output files
+  -registry_vert     DB server containing vertebrate species, in url format
+  -registry_nonvert  DB server containing non-vertebrate species, in url format
+  -base_output_dir   Path for output files
 
 =cut
 
@@ -69,14 +68,16 @@ sub pipeline_analyses {
       -logic_name => 'submit',
       -module     => 'Bio::EnsEMBL::GIFTS::Submit',
       -parameters => {
-                       species_list    => $self->o('species_list'),
-                       base_output_dir => $self->o('base_output_dir'),
-                       tag             => $self->o('tag'),
-                       email           => $self->o('email'),
-                       ensembl_release => $self->o('ensembl_release'),
-                       rest_server     => $self->o('rest_server'),
-                       auth_token      => $self->o('auth_token'),
-                       timestamp       => $self->o('timestamp'),
+                       registry_vert    => $self->o('registry_vert'),
+                       registry_nonvert => $self->o('registry_nonvert'),
+                       species_list     => $self->o('species_list'),
+                       base_output_dir  => $self->o('base_output_dir'),
+                       tag              => $self->o('tag'),
+                       email            => $self->o('email'),
+                       ensembl_release  => $self->o('ensembl_release'),
+                       rest_server      => $self->o('rest_server'),
+                       auth_token       => $self->o('auth_token'),
+                       timestamp        => $self->o('timestamp'),
                      },
       -rc_name    => 'default',
       -flow_into  => {
@@ -97,9 +98,8 @@ sub pipeline_analyses {
                                ' -user '.$self->o('userstamp').
                                ' -species #species#'.
                                ' -release #ensembl_release#'.
-                               ' -registry_host '.$self->o('registry_host').
-                               ' -registry_user '.$self->o('registry_user').
-                               ' -registry_port '.$self->o('registry_port').
+                               ' -registry_vert #registry_vert#'.
+                               ' -registry_nonvert #registry_nonvert#'.
                                ' -rest_server #rest_server#'.
                                ' -auth_token #auth_token#'.
                                ' > #output_dir#/#import_species_data_file#'
@@ -120,3 +120,4 @@ sub pipeline_analyses {
 }
 
 1;
+

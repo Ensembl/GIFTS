@@ -58,10 +58,8 @@ use Bio::EnsEMBL::GIFTS::BaseMapping qw(make_cigar_plus_string make_md_string ru
 my $output_dir = ".";
 my $output_prefix = "alignment_blast_";
 
-my $registry_host;
-my $registry_user;
-my $registry_pass;
-my $registry_port;
+my $registry_vert;
+my $registry_nonvert;
 
 my $user;
 
@@ -84,10 +82,8 @@ my $auth_token;
 GetOptions(
         'output_dir=s' => \$output_dir,
         'output_prefix=s' => \$output_prefix,
-        'registry_host=s' => \$registry_host,
-        'registry_user=s' => \$registry_user,
-        'registry_pass=s' => \$registry_pass,
-        'registry_port=s' => \$registry_port,
+        'registry_vert=s' => \$registry_vert,
+        'registry_nonvert=s' => \$registry_nonvert,
         'user=s' => \$user,
         'species=s' => \$species,
         'perfect_match_alignment_run_id=i' => \$perfect_match_alignment_run_id,
@@ -101,8 +97,12 @@ GetOptions(
 	'auth_token=s' => \$auth_token
    );
 
-if (!$registry_host or !$registry_user or !$registry_port) {
-  die("Please specify the registry host details with --registry_host, --registry_user and --registry_port.");
+if (!$registry_vert) {
+  die("Please specify a vertebrate registry file with --registry_vert");
+}
+
+if (!$registry_nonvert) {
+  die("Please specify a non-vertebrate registry file with --registry_nonvert");
 }
 
 if (!$user) {
@@ -179,13 +179,8 @@ if ($release==0) {
 
 # Create the registry
 my $registry = "Bio::EnsEMBL::Registry";
-$registry->load_registry_from_db(
-    -host => $registry_host,
-    -user => $registry_user,
-    -port => $registry_port,
-    -pass => $registry_pass,
-    -db_version => ''.$release
-);
+$registry->load_registry_from_url($registry_vert);
+$registry->load_registry_from_url($registry_nonvert);
 $registry->set_reconnect_when_lost();
 
 # EnsEMBL database connection
@@ -355,3 +350,4 @@ close UNIPROT_NOSEQS;
 if ($write_cigar) {
   print "$cigar_id_count cigars written to ensp_u_cigar table\n";
 }
+

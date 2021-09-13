@@ -37,30 +37,12 @@ sub default_options {
     # In order to seed the database multiple times, we need the
     # species list here, rather than specified via 'input_id'.
     species_list => [
-      {
-        assembly   => 'GRCh38',
-        species    => 'homo_sapiens',
-      },
-      {
-        assembly   => 'GRCm39',
-        species    => 'mus_musculus',
-      },
-      {
-        assembly   => 'GRCz11',
-        species    => 'danio_rerio',
-      },
-      {
-        assembly   => 'Rnor_6.0',
-        species    => 'rattus_norvegicus',
-      },
-      {
-        assembly   => 'Glycine_max_v2.1',
-        species    => 'glycine_max',
-      },
-      {
-        assembly   => 'Zm-B73-REFERENCE-NAM-5.0',
-        species    => 'zea_mays',
-      }
+      'danio_rerio',
+      'glycine_max',
+      'homo_sapiens',
+      'mus_musculus',
+      'rattus_norvegicus',
+      'zea_mays',
     ],
 
     # Parameters to track submissions
@@ -136,3 +118,4 @@ sub resource_classes {
 }
 
 1;
+
