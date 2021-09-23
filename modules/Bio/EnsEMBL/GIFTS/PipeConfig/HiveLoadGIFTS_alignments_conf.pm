@@ -373,7 +373,6 @@ sub pipeline_analyses {
                                '$ENSEMBLSPECIESHISTORYID/alignment_status/ALIGNMENT_COMPLETED/ '
                      },
       -rc_name    => 'default',
-      -flow_into => { 1 => ['notify'] },
     },
     
     {
