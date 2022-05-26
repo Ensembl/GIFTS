@@ -292,7 +292,7 @@ while ($next_url) {
       store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
       if ($translation_seq) {
         print(UNIPROT_SEQS "mapping_id=$mapping_id transcript_id=$gifts_transcript_id enst_id=$enst_id uniprot_id=$uniprot_id STORED as perfect match (uniprot sequence not found)\n");
-      } elsif ($uniprot_seq)) {
+      } elsif ($uniprot_seq) {
         print(UNIPROT_SEQS "mapping_id=$mapping_id transcript_id=$gifts_transcript_id enst_id=$enst_id uniprot_id=$uniprot_id STORED as perfect match (ensembl sequence not found)\n");
       } else {
         print(UNIPROT_SEQS "mapping_id=$mapping_id transcript_id=$gifts_transcript_id enst_id=$enst_id uniprot_id=$uniprot_id STORED as perfect match (both sequences not found)\n");
