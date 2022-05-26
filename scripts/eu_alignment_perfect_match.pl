@@ -267,16 +267,26 @@ while ($next_url) {
       if ($transcript->translate) {
         my $translation = $transcript->translate();
         $translation_seq = $translation->seq();
+      } else {
+        print(UNIPROT_NOSEQS "ENST,$enst_id,could not be translated,the alignment will be missing\n");
       }
     } else {
-      print("Transcript $enst_id could not be fetched.\n");
+      print("Transcript $enst_id could not be fetched\n");
+      print(UNIPROT_NOSEQS "ENST,$enst_id,could not be fetched from the Ensembl core database using registries $registry_vert and $registry_nonvert,the alignment will be missing\n");
     }
+    
+    if (!$uniprot_seq) {
+      print(UNIPROT_NOSEQS "UNIPROT,$uniprot_id,could not be found in the uniprot files,".join(":",@uniprot_archives).", the alignment will be missing\n");
+    }
+    
     # store the result if sequences are found or if a UniParc match was made
     if ($translation_seq && $uniprot_seq) {
       store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
+      print(UNIPROT_SEQS "mapping_id=$mapping_id transcript_id=$gifts_transcript_id enst_id=$enst_id uniprot_id=$uniprot_id STORED as non-perfect match\n");
     }
     elsif ($score1==1) {
       store_alignment($auth_token,$rest_server,$alignment_run_id,$uniprot_id,$gifts_transcript_id,$mapping_id,$score1,$score2,$mapping_type);
+      print(UNIPROT_SEQS "mapping_id=$mapping_id transcript_id=$gifts_transcript_id enst_id=$enst_id uniprot_id=$uniprot_id STORED as perfect match\n");
     }
   }
   
