@@ -37,7 +37,7 @@ sub default_options {
     # In order to seed the database multiple times, we need the
     # species list here, rather than specified via 'input_id'.
     species_list => [
-      'danio_rerio',
+        #'danio_rerio',#Uniprot no longer imports zebrafish ensembl annotations
       'glycine_max',
       'homo_sapiens',
       'mus_musculus',
@@ -62,7 +62,7 @@ sub default_options {
 # Implicit parameter propagation throughout the pipeline.
 sub hive_meta_table {
   my ($self) = @_;
-  
+
   return {
     %{$self->SUPER::hive_meta_table},
     'hive_use_param_stack' => 1,
