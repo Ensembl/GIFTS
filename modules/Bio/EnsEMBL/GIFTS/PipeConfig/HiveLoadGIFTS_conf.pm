@@ -112,9 +112,9 @@ sub resource_classes {
       #'default'      => { LSF => '-q production -M  2000' },
     'default'      => {SLURM => '--mem=2000 --time=7-00:00:00'}
     'datamover'    => {SLURM => '-p datamover --mem=2000 --time=7-00:00:00'},
-    'default_20GB' => { SLURM => '--mem=20000,--time=7-00:00:00' },
-    'default_25GB' => { SLURM => '--mem=25000, --time=7-00:00:00' },
-    'default_50GB' => { SLURM => '--mem=50000, --time=7-00:00:00' },
+    'default_20GB' => { SLURM => '--mem=20000 --time=7-00:00:00'},
+    'default_25GB' => { SLURM => '--mem=25000  --time=7-00:00:00'},
+    'default_50GB' => { SLURM => '--mem=50000  --time=7-00:00:00'},
   }
 }
 
